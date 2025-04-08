@@ -1,48 +1,39 @@
 package tn.fst.spring.projet_spring.entities.sale;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import tn.fst.spring.projet_spring.entities.payment.Invoice;
-import tn.fst.spring.projet_spring.entities.payment.Payment;
+import tn.fst.spring.projet_spring.entities.auth.User;
+import tn.fst.spring.projet_spring.entities.order.Order;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-@Entity
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Entity
 public class Sale {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Enumerated(EnumType.STRING)
-    private SaleType saleType; // ONLINE, DOOR_TO_DOOR
-    
+
+    @Column(nullable = false)
     private LocalDateTime saleDate;
-    
-    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL)
-    private List<SaleItem> items;
-    
-    private Long customerId;
-    
-    private String customerName;
-    
-    private String customerAddress;
-    
-    private String customerPhone;
-    
-    private Double totalAmount;
-    
+
+    @Column(nullable = false)
+    private double totalAmount;
+
     @Enumerated(EnumType.STRING)
-    private SaleStatus status;
-    
-    @OneToOne(mappedBy = "sale", cascade = CascadeType.ALL)
-    private Payment payment;
-    
-    @OneToOne(mappedBy = "sale", cascade = CascadeType.ALL)
-    private Invoice invoice;
+    @Column(nullable = false)
+    private SaleType saleType;
+
+    @ManyToOne
+    @JoinColumn(name = "seller_id")
+    private User seller;
+
+    @OneToOne
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL)
+    private Set<SaleItem> saleItems = new HashSet<>();
 }

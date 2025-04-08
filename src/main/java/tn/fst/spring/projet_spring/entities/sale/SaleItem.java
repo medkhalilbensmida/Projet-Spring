@@ -1,31 +1,30 @@
 package tn.fst.spring.projet_spring.entities.sale;
 
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import tn.fst.spring.projet_spring.entities.catalog.Product;
 
-@Entity
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Entity
 public class SaleItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "sale_id")
+    @JoinColumn(name = "sale_id", nullable = false)
     private Sale sale;
 
-    private Long productId;
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 
-    private String productName;
+    @Column(nullable = false)
+    private int quantity;
 
-    private Double unitPrice;
+    @Column(nullable = false)
+    private double unitPrice;
 
-    private Integer quantity;
-
-    private Double subtotal;
+    @Column(nullable = false)
+    private double subtotal;
 }
