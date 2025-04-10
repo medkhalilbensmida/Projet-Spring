@@ -1,10 +1,9 @@
-package tn.fst.spring.projet_spring.controllers;
+package tn.fst.spring.projet_spring.controller.catalog;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.projet_spring.entities.catalog.Product;
-import tn.fst.spring.projet_spring.entities.catalog.Category;
 import tn.fst.spring.projet_spring.services.catalog.ProductService;
 
 import java.util.List;
