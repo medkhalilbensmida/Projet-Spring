@@ -1,12 +1,14 @@
 package tn.fst.spring.projet_spring.services.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.products.ProductRequest;
 import tn.fst.spring.projet_spring.dto.products.ProductResponse;
-
+import tn.fst.spring.projet_spring.dto.products.ProductSearchRequest;
 import tn.fst.spring.projet_spring.model.catalog.Category;
 import tn.fst.spring.projet_spring.model.catalog.Product;
 import tn.fst.spring.projet_spring.model.catalog.Stock;
@@ -14,6 +16,8 @@ import tn.fst.spring.projet_spring.repositories.products.CategoryRepository;
 import tn.fst.spring.projet_spring.repositories.products.ProductRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IProductService;
 
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,9 +80,6 @@ public class ProductServiceImpl implements IProductService {
         product.setPrice(productRequest.getPrice());
         product.setCategory(category);
 
-        // On ne met généralement pas à jour le code-barres d'un produit existant
-        // product.setBarcode(productRequest.getBarcode());
-
         Product updatedProduct = productRepository.save(product);
         return convertToResponse(updatedProduct);
     }
@@ -93,8 +94,54 @@ public class ProductServiceImpl implements IProductService {
 
     @Override
     public boolean verifyTunisianBarcode(String barcode) {
-        // Validation simple - code-barres tunisien commence par 619 et a 13 chiffres
         return barcode != null && barcode.startsWith("619") && barcode.length() == 13;
+    }
+
+    @Override
+    public Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest) {
+        Specification<Product> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (searchRequest.getName() != null && !searchRequest.getName().isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("name")),
+                        "%" + searchRequest.getName().toLowerCase() + "%"));
+            }
+
+            if (searchRequest.getBarcode() != null && !searchRequest.getBarcode().isEmpty()) {
+                predicates.add(cb.equal(root.get("barcode"), searchRequest.getBarcode()));
+            }
+
+            if (searchRequest.getCategoryName() != null && !searchRequest.getCategoryName().isEmpty()) {
+                predicates.add(cb.equal(root.get("category").get("name"), searchRequest.getCategoryName()));
+            }
+
+            if (searchRequest.getMinPrice() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), searchRequest.getMinPrice()));
+            }
+
+            if (searchRequest.getMaxPrice() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), searchRequest.getMaxPrice()));
+            }
+
+            if (searchRequest.getMinStock() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("stock").get("quantity"), searchRequest.getMinStock()));
+            }
+
+            if (searchRequest.getMaxStock() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("stock").get("quantity"), searchRequest.getMaxStock()));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Pageable pageable = PageRequest.of(
+                searchRequest.getPage(),
+                searchRequest.getSize(),
+                Sort.by(searchRequest.getSortDirection(), searchRequest.getSortBy())
+        );
+
+        Page<Product> products = productRepository.findAll(spec, pageable);
+        return products.map(this::convertToResponse);
     }
 
     private ProductResponse convertToResponse(Product product) {
