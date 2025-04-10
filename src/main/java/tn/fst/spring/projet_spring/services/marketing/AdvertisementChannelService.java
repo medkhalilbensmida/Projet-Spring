@@ -6,12 +6,14 @@ import tn.fst.spring.projet_spring.entities.marketing.AdvertisementChannel;
 import tn.fst.spring.projet_spring.repositories.marketing.AdvertisementChannelRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class AdvertisementChannelService {
 
+    private final GoogleAdsService googleAdsService;
     private final AdvertisementChannelRepository repository;
 
     public List<AdvertisementChannel> getAll() {
@@ -23,10 +25,42 @@ public class AdvertisementChannelService {
     }
 
     public AdvertisementChannel save(AdvertisementChannel channel) {
-        return repository.save(channel);
+        try{
+            AdvertisementChannel result = this.configureCampaign(channel);
+            if (result == null){
+                throw new IllegalArgumentException("Failed to configure advertisement channel");
+            }
+            return repository.save(channel);
+        }
+        catch (Exception e){
+            throw e;
+        }
     }
 
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+
+    private AdvertisementChannel configureCampaign(AdvertisementChannel channel){
+        // Configure the advertisement campaign based on the channel type
+        switch (channel.getType()) {
+            case GOOGLE_ADS:
+                // Call Google Ads API to create the ad
+                // Use channel.getGoogleCustomerId(), channel.getGoogleCampaignName(), etc.
+                Map<String, String> resources = googleAdsService.createChannelCampaign(channel);
+                channel.setGoogleCampaignResourceName(resources.get("campaignResourceName"));
+                channel.setGoogleAdResourceName(resources.get("adResourceName"));
+                return channel;
+            case FACEBOOK:
+                // Call Facebook API to create the ad
+                break;
+            case TWITTER:
+                // Call Instagram API to create the ad
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported advertisement channel: " + channel.getType());
+        }
+        return null;
     }
 }

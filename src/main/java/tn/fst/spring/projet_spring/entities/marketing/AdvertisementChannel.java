@@ -20,6 +20,16 @@ public class AdvertisementChannel {
     private String plateforme;
 
     private double coutMoyenParVue;
+    
+
+    // Google Ads specific fields
+    private String googleCustomerId  = null;  // Google Ads Customer ID
+    private String googleCampaignName = null;  // Campaign Name
+    private String googleAdGroupName = null;  // Ad Group Name
+    private Long googleCompaignBudget = null;
+    private String googleAdResourceName = null;  // Ad Resource Name
+    private String googleCampaignResourceName = null;  // Campaign Resource Name
+
 
     @OneToMany(mappedBy = "channel")
     private Set<Advertisement> publicites;

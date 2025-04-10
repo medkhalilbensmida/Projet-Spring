@@ -65,6 +65,8 @@ public class AdvertisementController {
         return new AdvertisementDTO(
                 advertisement.getId(),
                 advertisement.getName(),
+                advertisement.getUrl(),
+                advertisement.getDescription(),
                 advertisement.getChannel().getId(),
                 advertisement.getTargetedAudience().getId(),
                 advertisement.getStartDate(),
@@ -98,7 +100,9 @@ public class AdvertisementController {
         }
 
         advertisement.setStartDate(dto.getStartDate());
+        advertisement.setUrl(dto.getUrl());
         advertisement.setEndDate(dto.getEndDate());
+        advertisement.setDescription(dto.getDescription());
         advertisement.setCost(dto.getCost());
         advertisement.setType(dto.getType());
         advertisement.setViews(dto.getViews());

@@ -11,7 +11,9 @@ import java.time.LocalDate;
 public class AdvertisementDTO {
 
     private Long id;
+    private String url;
     private String name;
+    private String description;
     private Long channelId;
     private Long targetedAudienceId;
     private LocalDate startDate;

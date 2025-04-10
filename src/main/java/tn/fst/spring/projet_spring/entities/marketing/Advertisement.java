@@ -16,6 +16,11 @@ public class Advertisement {
     @Column(nullable = false)
     private String name;
 
+    private String url;
+
+    @Column(nullable = false)
+    private String description;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "channel_id")
     private AdvertisementChannel channel;
