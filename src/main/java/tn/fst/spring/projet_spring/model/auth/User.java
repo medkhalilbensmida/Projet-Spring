@@ -1,25 +1,19 @@
 package tn.fst.spring.projet_spring.model.auth;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import tn.fst.spring.projet_spring.model.donation.Donation;
-import tn.fst.spring.projet_spring.model.forum.Comment;
-import tn.fst.spring.projet_spring.model.forum.ForumTopic;
-import tn.fst.spring.projet_spring.model.forum.Message;
-import tn.fst.spring.projet_spring.model.logistics.Complaint;
-import tn.fst.spring.projet_spring.model.order.Order;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@Table(name = "users")
+@EntityListeners(AuditingEntityListener.class)
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,24 +40,33 @@ public class User {
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<Order> orders = new HashSet<>();
+    // Constructeur pratique
+    public User(String username, String email, String password, Role role) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.isActive = true;
+    }
 
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
-    private Set<ForumTopic> forumTopics = new HashSet<>();
+    //  Constructeur requis pour DataInitializer
+    public User(String username, String email, String password, Role role, boolean isActive) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.isActive = isActive;
+    }
 
-    @OneToMany(mappedBy = "author", cascade = CascadeType.ALL)
-    private Set<Comment> comments = new HashSet<>();
-
-    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
-    private Set<Message> sentMessages = new HashSet<>();
-
-    @OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL)
-    private Set<Message> receivedMessages = new HashSet<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private Set<Complaint> complaints = new HashSet<>();
-
-    @OneToMany(mappedBy = "donor", cascade = CascadeType.ALL)
-    private Set<Donation> donations = new HashSet<>();
+    // Constructeur complet
+    public User(Long id, String username, String email, String password, Role role, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+        this.isActive = isActive;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }

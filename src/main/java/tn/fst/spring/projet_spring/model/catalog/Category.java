@@ -2,8 +2,6 @@ package tn.fst.spring.projet_spring.model.catalog;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,4 +20,12 @@ public class Category {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private Set<Product> products = new HashSet<>();
+
+    // Constructeur pratique
+    public Category(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
+    public Category() {}
 }

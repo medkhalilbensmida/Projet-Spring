@@ -2,8 +2,6 @@ package tn.fst.spring.projet_spring.model.catalog;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,4 +20,12 @@ public class Shelf {
 
     @ManyToMany(mappedBy = "shelves")
     private Set<Product> products = new HashSet<>();
+
+    // Constructeur pratique
+    public Shelf(String name, String type) {
+        this.name = name;
+        this.type = type;
+    }
+
+    public Shelf() {}
 }
