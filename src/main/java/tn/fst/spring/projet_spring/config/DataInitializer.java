@@ -4,8 +4,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import tn.fst.spring.projet_spring.model.auth.*;
-import tn.fst.spring.projet_spring.model.catalog.*;
+import tn.fst.spring.projet_spring.entities.auth.*;
+import tn.fst.spring.projet_spring.entities.catalog.*;
 import tn.fst.spring.projet_spring.repositories.auth.*;
 import tn.fst.spring.projet_spring.repositories.products.*;
 
