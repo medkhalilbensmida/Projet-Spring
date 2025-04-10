@@ -2,7 +2,7 @@ package tn.fst.spring.projet_spring.repositories.products;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import tn.fst.spring.projet_spring.entities.catalog.Product;
+import tn.fst.spring.projet_spring.model.catalog.Product;
 
 import java.util.List;
 

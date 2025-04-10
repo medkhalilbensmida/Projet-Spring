@@ -1,6 +1,6 @@
 package tn.fst.spring.projet_spring.repositories.auth;
 
-import tn.fst.spring.projet_spring.entities.auth.Role;
+import tn.fst.spring.projet_spring.model.auth.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

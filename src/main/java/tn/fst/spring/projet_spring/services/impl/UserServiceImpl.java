@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.auth.UserDto;
-import tn.fst.spring.projet_spring.entities.auth.User;
+import tn.fst.spring.projet_spring.model.auth.User;
 import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IUserService;
 
