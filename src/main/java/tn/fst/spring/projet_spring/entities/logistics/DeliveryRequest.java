@@ -1,4 +1,4 @@
-package tn.fst.spring.projet_spring.entities.logistics;
+package tn.fst.spring.projet_spring.model.logistics;
 
 import jakarta.persistence.*;
 import lombok.Data;

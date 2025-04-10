@@ -1,4 +1,4 @@
-package tn.fst.spring.projet_spring.entities.donation;
+package tn.fst.spring.projet_spring.model.donation;
 
 import jakarta.persistence.*;
 import lombok.Data;

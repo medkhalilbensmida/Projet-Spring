@@ -1,7 +1,9 @@
-package tn.fst.spring.projet_spring.entities.catalog;
+package tn.fst.spring.projet_spring.model.catalog;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import tn.fst.spring.projet_spring.entities.donation.Donation;
 import tn.fst.spring.projet_spring.entities.order.OrderItem;
 

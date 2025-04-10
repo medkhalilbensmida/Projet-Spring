@@ -1,4 +1,4 @@
-package tn.fst.spring.projet_spring.entities.payment;
+package tn.fst.spring.projet_spring.model.payment;
 
 import jakarta.persistence.*;
 import lombok.Data;

@@ -1,10 +1,13 @@
 package tn.fst.spring.projet_spring.entities.auth;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
+@Table(name = "permissions")
 public class Permission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,4 +15,9 @@ public class Permission {
 
     @Column(nullable = false, unique = true)
     private String name;
+
+    // Constructeur pratique
+    public Permission(String name) {
+        this.name = name;
+    }
 }

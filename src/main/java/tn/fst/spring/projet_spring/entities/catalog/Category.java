@@ -20,4 +20,12 @@ public class Category {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
     private Set<Product> products = new HashSet<>();
+
+    // Constructeur pratique
+    public Category(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
+    public Category() {}
 }

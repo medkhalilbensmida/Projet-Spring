@@ -20,4 +20,12 @@ public class Shelf {
 
     @ManyToMany(mappedBy = "shelves")
     private Set<Product> products = new HashSet<>();
+
+    // Constructeur pratique
+    public Shelf(String name, String type) {
+        this.name = name;
+        this.type = type;
+    }
+
+    public Shelf() {}
 }

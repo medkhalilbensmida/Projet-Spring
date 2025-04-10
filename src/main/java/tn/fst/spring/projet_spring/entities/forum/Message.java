@@ -1,4 +1,4 @@
-package tn.fst.spring.projet_spring.entities.forum;
+package tn.fst.spring.projet_spring.model.forum;
 
 import jakarta.persistence.*;
 import lombok.Data;

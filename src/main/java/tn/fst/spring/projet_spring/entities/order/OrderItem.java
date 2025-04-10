@@ -1,4 +1,4 @@
-package tn.fst.spring.projet_spring.entities.order;
+package tn.fst.spring.projet_spring.model.order;
 
 import jakarta.persistence.*;
 import lombok.Data;
