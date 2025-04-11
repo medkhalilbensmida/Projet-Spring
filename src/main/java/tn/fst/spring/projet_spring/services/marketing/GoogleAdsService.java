@@ -33,6 +33,7 @@ import com.google.ads.googleads.v19.services.GoogleAdsServiceClient;
 
 import tn.fst.spring.projet_spring.entities.marketing.Advertisement;
 import tn.fst.spring.projet_spring.entities.marketing.AdvertisementChannel;
+import tn.fst.spring.projet_spring.entities.marketing.config.GoogleAdsConfig;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -69,7 +70,7 @@ public class GoogleAdsService {
         }
     }
 
-    public Campaign createCampaign(String customerId, String campaignName, long budgetAmountMicros) throws GoogleAdsException {
+    private Campaign createCampaign(String customerId, String campaignName, long budgetAmountMicros) throws GoogleAdsException {
         // Creates a budget to be used by the campaign.
         String budgetResourceName = addCampaignBudget(customerId, 
                 "Budget for " + campaignName, budgetAmountMicros);
@@ -114,7 +115,7 @@ public class GoogleAdsService {
 
 
     // Create a Google Ads Ad Group
-    public AdGroup createAdGroup(String customerId, String adGroupName, String campaignResourceName) {
+    private AdGroup createAdGroup(String customerId, String adGroupName, String campaignResourceName) {
         try (AdGroupServiceClient adGroupServiceClient = googleAdsClient.getLatestVersion().createAdGroupServiceClient()) {
 
             // Create the ad group
@@ -141,7 +142,7 @@ public class GoogleAdsService {
     }
 
     // Create an ad for the Ad Group
-    public Ad createAd(String customerId, String adGroupResourceName, String headline, String description, String finalUrl) {
+    private Ad createAd(String customerId, String adGroupResourceName, String headline, String description, String finalUrl) {
         try (AdGroupAdServiceClient adGroupAdServiceClient = googleAdsClient.getLatestVersion().createAdGroupAdServiceClient()) {
 
             // Create the text ad
@@ -180,10 +181,11 @@ public class GoogleAdsService {
 
     public  Map<String, String> createChannelCampaign(AdvertisementChannel channel) {
         // Implementation for creating a channel
-        String customerId = channel.getGoogleCustomerId();
-        String campaignName = channel.getGoogleCampaignName();
-        Long compaignBudget = channel.getGoogleCompaignBudget();
-        String adGroupName = channel.getGoogleAdGroupName();
+        GoogleAdsConfig config = channel.getGoogleAdsConfig();
+        String customerId = config.getCustomerId();
+        String campaignName = config.getCampaignName();
+        Long compaignBudget = config.getCampaignBudgetMicros();
+        String adGroupName = config.getAdGroupName();
         try
             {
                 // Create a new campaign
@@ -211,10 +213,12 @@ public class GoogleAdsService {
 
     public void sendAdFromChannel(Advertisement ad, AdvertisementChannel channel) {
             // Extract necessary information from the Channel entity
-            String customerId = channel.getGoogleCustomerId();
-            String campaignName = channel.getGoogleCampaignName();
-            Long compaignBudget = channel.getGoogleCompaignBudget();
-            String adGroupName = channel.getGoogleAdGroupName();
+            GoogleAdsConfig config = channel.getGoogleAdsConfig();
+
+            String customerId = config.getCustomerId();
+            String campaignName = config.getCampaignName();
+            Long compaignBudget = config.getCampaignBudgetMicros();
+            String adGroupName = config.getAdGroupName();
             String headline = ad.getName();
             String description = ad.getDescription();
 

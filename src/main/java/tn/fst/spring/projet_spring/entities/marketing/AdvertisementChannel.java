@@ -3,6 +3,9 @@ package tn.fst.spring.projet_spring.entities.marketing;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tn.fst.spring.projet_spring.entities.marketing.config.GoogleAdsConfig;
+import tn.fst.spring.projet_spring.entities.marketing.config.FacebookAdsConfig;
+
 import java.util.Set;
 @Data
 @NoArgsConstructor
@@ -21,16 +24,13 @@ public class AdvertisementChannel {
 
     private double coutMoyenParVue;
     
+    // Platform-specific configs
+    @OneToOne(cascade = CascadeType.ALL)
+    private GoogleAdsConfig googleAdsConfig;
 
-    // Google Ads specific fields
-    private String googleCustomerId  = null;  // Google Ads Customer ID
-    private String googleCampaignName = null;  // Campaign Name
-    private String googleAdGroupName = null;  // Ad Group Name
-    private Long googleCompaignBudget = null;
-    private String googleAdResourceName = null;  // Ad Resource Name
-    private String googleCampaignResourceName = null;  // Campaign Resource Name
-
-
+    @OneToOne(cascade = CascadeType.ALL)
+    private FacebookAdsConfig facebookAdsConfig;
+    
     @OneToMany(mappedBy = "channel")
     private Set<Advertisement> publicites;
 }

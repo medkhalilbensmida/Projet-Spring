@@ -49,14 +49,11 @@ public class AdvertisementChannelService {
                 // Call Google Ads API to create the ad
                 // Use channel.getGoogleCustomerId(), channel.getGoogleCampaignName(), etc.
                 Map<String, String> resources = googleAdsService.createChannelCampaign(channel);
-                channel.setGoogleCampaignResourceName(resources.get("campaignResourceName"));
-                channel.setGoogleAdResourceName(resources.get("adResourceName"));
+                channel.getGoogleAdsConfig().setCampaignResourceName(resources.get("campaignResourceName"));
+                channel.getGoogleAdsConfig().setAdResourceName(resources.get("adResourceName"));
                 return channel;
             case FACEBOOK:
                 // Call Facebook API to create the ad
-                break;
-            case TWITTER:
-                // Call Instagram API to create the ad
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported advertisement channel: " + channel.getType());
