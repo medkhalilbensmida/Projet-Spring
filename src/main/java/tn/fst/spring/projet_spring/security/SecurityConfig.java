@@ -65,10 +65,26 @@ public class SecurityConfig {
                 .securityMatcher("/**")
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Swagger
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products").permitAll()
-                        .requestMatchers("/api/products/**").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+
+                        // Produits
+                        .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/products/verify-barcode/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/products/search").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
+
+                        .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+
+                        // Utilisateur connecté
+                        .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
+
+                        // Admin uniquement
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(eh -> eh.authenticationEntryPoint(jwtAuthEntryPoint))

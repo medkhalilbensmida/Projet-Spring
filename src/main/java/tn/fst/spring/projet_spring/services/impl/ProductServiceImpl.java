@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.products.ProductRequest;
 import tn.fst.spring.projet_spring.dto.products.ProductResponse;
 import tn.fst.spring.projet_spring.dto.products.ProductSearchRequest;
+import tn.fst.spring.projet_spring.dto.products.ProductUpdateRequest;
 import tn.fst.spring.projet_spring.model.catalog.Category;
 import tn.fst.spring.projet_spring.model.catalog.Product;
 import tn.fst.spring.projet_spring.model.catalog.Stock;
@@ -47,7 +48,7 @@ public class ProductServiceImpl implements IProductService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Tunisian barcode");
         }
 
-        Category category = categoryRepository.findById(productRequest.getCategoryId())
+        Category category = categoryRepository.findByName(productRequest.getCategoryName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
 
         Product product = new Product();
@@ -67,22 +68,32 @@ public class ProductServiceImpl implements IProductService {
         return convertToResponse(savedProduct);
     }
 
+
     @Override
-    public ProductResponse updateProduct(Long id, ProductRequest productRequest) {
+    public ProductResponse updateProduct(Long id, ProductUpdateRequest productRequest) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
 
-        Category category = categoryRepository.findById(productRequest.getCategoryId())
+        Category category = categoryRepository.findByName(productRequest.getCategoryName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
 
         product.setName(productRequest.getName());
+        product.setBarcode(productRequest.getBarcode());
         product.setDescription(productRequest.getDescription());
         product.setPrice(productRequest.getPrice());
         product.setCategory(category);
 
+        if (product.getStock() != null) {
+            product.getStock().setQuantity(productRequest.getStockQuantity());
+            product.getStock().setMinThreshold(productRequest.getMinThreshold());
+        }
+
         Product updatedProduct = productRepository.save(product);
         return convertToResponse(updatedProduct);
     }
+
+
+
 
     @Override
     public void deleteProduct(Long id) {

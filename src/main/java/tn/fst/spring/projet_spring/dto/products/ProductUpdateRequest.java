@@ -4,7 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
-public class ProductRequest {
+public class ProductUpdateRequest {
     @NotBlank
     private String name;
 
@@ -20,7 +20,7 @@ public class ProductRequest {
     private String categoryName;
 
     @PositiveOrZero
-    private int initialQuantity;
+    private int stockQuantity;
 
     @PositiveOrZero
     private int minThreshold;

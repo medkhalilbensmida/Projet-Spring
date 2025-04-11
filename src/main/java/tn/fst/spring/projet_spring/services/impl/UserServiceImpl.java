@@ -2,10 +2,15 @@ package tn.fst.spring.projet_spring.services.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.auth.UserDto;
+import tn.fst.spring.projet_spring.dto.auth.UserAdminUpdateDto;
+import tn.fst.spring.projet_spring.dto.auth.UserProfileUpdateDto;
+import tn.fst.spring.projet_spring.model.auth.Role;
 import tn.fst.spring.projet_spring.model.auth.User;
+import tn.fst.spring.projet_spring.repositories.auth.RoleRepository;
 import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IUserService;
 
@@ -16,6 +21,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<UserDto> getAllUsers() {
@@ -32,22 +39,54 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public UserDto updateUser(Long id, UserDto userDto) {
+    public UserDto updateUserByAdmin(Long id, UserAdminUpdateDto adminDto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        if (userRepository.existsByEmail(userDto.getEmail()) &&
-                !user.getEmail().equals(userDto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
-        }
+        user.setEmail(adminDto.getEmail());
+        user.setUsername(adminDto.getUsername());
 
-        user.setEmail(userDto.getEmail());
-        if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
-            user.setPassword(userDto.getPassword());
+        if (adminDto.getPassword() != null && !adminDto.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(adminDto.getPassword()));
         }
 
         User updatedUser = userRepository.save(user);
         return convertToDto(updatedUser);
+    }
+
+    @Override
+    public UserDto updateCurrentUserProfile(String email, UserProfileUpdateDto profileDto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        user.setEmail(profileDto.getEmail());
+        user.setUsername(profileDto.getUsername());
+
+        if (profileDto.getPassword() != null && !profileDto.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(profileDto.getPassword()));
+        }
+
+        User updatedUser = userRepository.save(user);
+        return convertToDto(updatedUser);
+    }
+
+    @Override
+    public UserDto getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return convertToDto(user);
+    }
+
+    @Override
+    public void updateUserRole(Long userId, String roleName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+
+        user.setRole(role);
+        userRepository.save(user);
     }
 
     @Override
