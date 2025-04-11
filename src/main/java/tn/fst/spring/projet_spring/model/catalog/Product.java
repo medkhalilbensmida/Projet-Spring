@@ -48,7 +48,6 @@ public class Product {
     private Set<Donation> donations = new HashSet<>();
 
     public boolean validateBarcode() {
-        // Implementation of barcode validation logic
         return barcode != null && barcode.matches("^\\d{12,13}$");
     }
 }
