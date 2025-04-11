@@ -109,6 +109,7 @@ public class GoogleAdsService {
                 googleAdsClient.getLatestVersion().createCampaignServiceClient()) {
             MutateCampaignsResponse response =
                     campaignServiceClient.mutateCampaigns(customerId, List.of(op));
+
             return response.getResults(0).getCampaign();
         }
         }

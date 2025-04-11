@@ -49,6 +49,9 @@ public class AdvertisementChannelService {
                 // Call Google Ads API to create the ad
                 // Use channel.getGoogleCustomerId(), channel.getGoogleCampaignName(), etc.
                 Map<String, String> resources = googleAdsService.createChannelCampaign(channel);
+                if (resources == null || resources.isEmpty()) {
+                    throw new IllegalArgumentException("Failed to create Google Ads campaign");
+                }
                 channel.getGoogleAdsConfig().setCampaignResourceName(resources.get("campaignResourceName"));
                 channel.getGoogleAdsConfig().setAdResourceName(resources.get("adResourceName"));
                 return channel;

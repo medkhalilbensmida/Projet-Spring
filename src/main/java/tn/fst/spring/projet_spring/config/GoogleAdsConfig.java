@@ -4,6 +4,10 @@ import com.google.ads.googleads.lib.GoogleAdsClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.InputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 @Configuration
 public class GoogleAdsConfig {
 

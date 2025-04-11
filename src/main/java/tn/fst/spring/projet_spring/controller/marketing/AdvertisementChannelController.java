@@ -37,9 +37,16 @@ public class AdvertisementChannelController {
     }
 
     @PostMapping
-    public AdvertisementChannelDTO create(@RequestBody AdvertisementChannelDTO channelDTO) {
-        AdvertisementChannel channel = toEntity(channelDTO);
-        return toDTO(service.save(channel));
+    public ResponseEntity<AdvertisementChannelDTO> create(@RequestBody AdvertisementChannelDTO channelDTO) {
+        try {
+            AdvertisementChannel channel = toEntity(channelDTO);
+            AdvertisementChannel savedChannel = service.save(channel);
+            return ResponseEntity.ok(toDTO(savedChannel));  // Return the DTO of the saved channel
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid channel type: " + channelDTO.getType(), e); 
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create advertisement channel", e);
+        }
     }
 
     @PutMapping("/{id}")
@@ -101,34 +108,41 @@ public class AdvertisementChannelController {
 
     }
 
-    // Convert AdvertisementChannelDTO to AdvertisementChannel entity
-    private AdvertisementChannel toEntity(AdvertisementChannelDTO dto) {
-        AdvertisementChannel channel = new AdvertisementChannel();
+   // Convert AdvertisementChannelDTO to AdvertisementChannel entity
+private AdvertisementChannel toEntity(AdvertisementChannelDTO dto) {
+    AdvertisementChannel channel = new AdvertisementChannel();
+
+ 
+    // Check for the specific DTO types
+    if (dto instanceof GoogleAdsChannelDTO googleAdsDTO) {
+        GoogleAdsConfig googleAdsConfig = new GoogleAdsConfig();
+        channel.setId(dto.getId());
+        channel.setType(ChannelType.valueOf("GOOGLE_ADS"));  // Convert String to Enum
+        channel.setPlateforme(dto.getPlatform());
+        channel.setCoutMoyenParVue(dto.getAverageCostPerView());
+        googleAdsConfig.setCustomerId(googleAdsDTO.getGoogleCustomerId());
+        googleAdsConfig.setCampaignName(googleAdsDTO.getGoogleCampaignName());
+        googleAdsConfig.setAdGroupName(googleAdsDTO.getGoogleAdGroupName());
+        googleAdsConfig.setCampaignBudgetMicros(googleAdsDTO.getGoogleCompaignBudget());
+        googleAdsConfig.setAdResourceName(googleAdsDTO.getGoogleAdResourceName());
+        googleAdsConfig.setCampaignResourceName(googleAdsDTO.getGoogleCampaignResourceName());
+        channel.setGoogleAdsConfig(googleAdsConfig);
+    } else if (dto instanceof FacebookAdsChannelDTO facebookAdsDTO) {
+        FacebookAdsConfig facebookAdsConfig = new FacebookAdsConfig();
         channel.setId(dto.getId());
         channel.setType(ChannelType.valueOf(dto.getType()));  // Convert String to Enum
         channel.setPlateforme(dto.getPlatform());
         channel.setCoutMoyenParVue(dto.getAverageCostPerView());
-
-        if (dto instanceof GoogleAdsChannelDTO googleAdsDTO) {
-
-            GoogleAdsConfig googleAdsConfig = new GoogleAdsConfig();
-            googleAdsConfig.setCustomerId(googleAdsDTO.getGoogleCustomerId());
-            googleAdsConfig.setCampaignName(googleAdsDTO.getGoogleCampaignName());
-            googleAdsConfig.setAdGroupName(googleAdsDTO.getGoogleAdGroupName());
-            googleAdsConfig.setCampaignBudgetMicros(googleAdsDTO.getGoogleCompaignBudget());
-            googleAdsConfig.setAdResourceName(null); // Set to null initially
-            googleAdsConfig.setCampaignResourceName(null);
-            channel.setGoogleAdsConfig(googleAdsConfig);
-        } else if (dto instanceof FacebookAdsChannelDTO facebookAdsDTO) {
-            FacebookAdsConfig facebookAdsConfig = new FacebookAdsConfig();
-            facebookAdsConfig.setPageId(facebookAdsDTO.getFacebookPageId());
-            facebookAdsConfig.setAccessToken(facebookAdsDTO.getFacebookAccessToken());
-            facebookAdsConfig.setCampaignName(facebookAdsDTO.getCompaignName());
-            channel.setFacebookAdsConfig(facebookAdsConfig);
-        } else {
-            throw new IllegalArgumentException("Unknown DTO type: " + dto.getClass().getName());
-        }
-
-        return channel;
+        facebookAdsConfig.setPageId(facebookAdsDTO.getFacebookPageId());
+        facebookAdsConfig.setAccessToken(facebookAdsDTO.getFacebookAccessToken());
+        facebookAdsConfig.setCampaignName(facebookAdsDTO.getCompaignName());
+        channel.setFacebookAdsConfig(facebookAdsConfig);
+    } else {
+        // Throw exception for unknown DTO types
+        throw new IllegalArgumentException("Unknown DTO type: " + dto.getClass().getName());
     }
+
+    return channel;
+}
+
 }
