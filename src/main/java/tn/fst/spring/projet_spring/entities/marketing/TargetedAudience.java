@@ -15,6 +15,8 @@ public class TargetedAudience {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String nom; // Exemple : "Jeunes adultes Tunisie"
+
     private Integer ageMin;
 
     private Integer ageMax;

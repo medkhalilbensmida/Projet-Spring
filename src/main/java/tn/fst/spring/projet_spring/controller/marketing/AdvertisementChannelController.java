@@ -3,9 +3,10 @@ package tn.fst.spring.projet_spring.controller.marketing;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tn.fst.spring.projet_spring.controller.marketing.dto.AdvertisementChannelDTO;
-import tn.fst.spring.projet_spring.controller.marketing.dto.FacebookAdsChannelDTO;
-import tn.fst.spring.projet_spring.controller.marketing.dto.GoogleAdsChannelDTO;
+
+import tn.fst.spring.projet_spring.dto.marketing.AdvertisementChannelDTO;
+import tn.fst.spring.projet_spring.dto.marketing.FacebookAdsChannelDTO;
+import tn.fst.spring.projet_spring.dto.marketing.GoogleAdsChannelDTO;
 import tn.fst.spring.projet_spring.entities.marketing.AdvertisementChannel;
 import tn.fst.spring.projet_spring.entities.marketing.ChannelType;
 import tn.fst.spring.projet_spring.entities.marketing.config.FacebookAdsConfig;

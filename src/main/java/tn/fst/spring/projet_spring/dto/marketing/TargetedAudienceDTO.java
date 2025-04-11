@@ -1,4 +1,4 @@
-package tn.fst.spring.projet_spring.controller.marketing.dto;
+package tn.fst.spring.projet_spring.dto.marketing;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,6 +8,7 @@ import lombok.Data;
 public class TargetedAudienceDTO {
 
     private Long id;
+    private String name;
     private Integer ageMin;
     private Integer ageMax;
     private String location;

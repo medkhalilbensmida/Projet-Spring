@@ -3,7 +3,8 @@ package tn.fst.spring.projet_spring.controller.marketing;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tn.fst.spring.projet_spring.controller.marketing.dto.TargetedAudienceDTO;
+
+import tn.fst.spring.projet_spring.dto.marketing.TargetedAudienceDTO;
 import tn.fst.spring.projet_spring.entities.marketing.TargetedAudience;
 import tn.fst.spring.projet_spring.services.marketing.TargetedAudienceService;
 
@@ -58,6 +59,7 @@ public class TargetedAudienceController {
     private TargetedAudienceDTO toDTO(TargetedAudience audience) {
         return new TargetedAudienceDTO(
                 audience.getId(),
+                audience.getNom(),
                 audience.getAgeMin(),
                 audience.getAgeMax(),
                 audience.getLocalisation(),
@@ -68,6 +70,7 @@ public class TargetedAudienceController {
     private TargetedAudience toEntity(TargetedAudienceDTO dto) {
         TargetedAudience audience = new TargetedAudience();
         audience.setId(dto.getId());
+        audience.setNom(dto.getName());
         audience.setAgeMin(dto.getAgeMin());
         audience.setAgeMax(dto.getAgeMax());
         audience.setLocalisation(dto.getLocation());

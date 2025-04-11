@@ -1,4 +1,4 @@
-package tn.fst.spring.projet_spring.controller.marketing.dto;
+package tn.fst.spring.projet_spring.dto.marketing;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;

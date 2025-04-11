@@ -3,7 +3,8 @@ package tn.fst.spring.projet_spring.controller.marketing;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tn.fst.spring.projet_spring.controller.marketing.dto.AdvertisementDTO;
+
+import tn.fst.spring.projet_spring.dto.marketing.AdvertisementDTO;
 import tn.fst.spring.projet_spring.entities.marketing.Advertisement;
 import tn.fst.spring.projet_spring.entities.marketing.AdvertisementChannel;
 import tn.fst.spring.projet_spring.entities.marketing.TargetedAudience;
