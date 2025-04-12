@@ -17,8 +17,6 @@ import tn.fst.spring.projet_spring.repositories.auth.RoleRepository;
 import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.security.jwt.JwtService;
 
-import java.util.Optional;
-
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -27,8 +25,8 @@ public class AuthenticationController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
@@ -48,19 +46,18 @@ public class AuthenticationController {
             return ResponseEntity.badRequest().body("Email déjà utilisé");
         }
 
-        Optional<Role> defaultRole = roleRepository.findByName("ROLE_CUSTOMER");
-        if (defaultRole.isEmpty()) {
-            return ResponseEntity.badRequest().body("Rôle par défaut non trouvé");
-        }
+        Role role = roleRepository.findByName("ROLE_CUSTOMER")
+                .orElseThrow(() -> new RuntimeException("Rôle par défaut non trouvé"));
 
         User user = new User(
                 request.getUsername(),
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                defaultRole.get()
+                role
         );
 
         userRepository.save(user);
         return ResponseEntity.ok("Utilisateur enregistré avec succès");
     }
+
 }

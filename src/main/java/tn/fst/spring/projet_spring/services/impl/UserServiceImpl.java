@@ -20,9 +20,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
+
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
     @Override
     public List<UserDto> getAllUsers() {
@@ -34,14 +35,14 @@ public class UserServiceImpl implements IUserService {
     @Override
     public UserDto getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur  introuvable  !"));
         return convertToDto(user);
     }
 
     @Override
     public UserDto updateUserByAdmin(Long id, UserAdminUpdateDto adminDto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur  introuvable  !"));
 
         user.setEmail(adminDto.getEmail());
         user.setUsername(adminDto.getUsername());
@@ -57,7 +58,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public UserDto updateCurrentUserProfile(String email, UserProfileUpdateDto profileDto) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur  introuvable  !"));
 
         user.setEmail(profileDto.getEmail());
         user.setUsername(profileDto.getUsername());
@@ -73,17 +74,28 @@ public class UserServiceImpl implements IUserService {
     @Override
     public UserDto getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur  introuvable  !"));
         return convertToDto(user);
     }
 
     @Override
     public void updateUserRole(Long userId, String roleName) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable  !"));
 
         Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+                .orElseThrow(() -> {
+                    List<String> availableRoles = roleRepository.findAll()
+                            .stream()
+                            .map(Role::getName)
+                            .toList();
+                    String message = String.format(
+                            "Rôle << %s >> introuvable ! Voici la liste des rôles valides : %s",
+                            roleName,
+                            String.join(", ", availableRoles)
+                    );
+                    return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+                });
 
         user.setRole(role);
         userRepository.save(user);
@@ -92,7 +104,7 @@ public class UserServiceImpl implements IUserService {
     @Override
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur  introuvable  !");
         }
         userRepository.deleteById(id);
     }

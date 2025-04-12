@@ -12,10 +12,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import tn.fst.spring.projet_spring.security.jwt.JwtAuthenticationFilter;
 import tn.fst.spring.projet_spring.security.jwt.CustomAuthEntryPoint;
 import tn.fst.spring.projet_spring.security.jwt.JwtAuthEntryPoint;
+import tn.fst.spring.projet_spring.security.jwt.CustomAccessDeniedHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -30,6 +32,9 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthEntryPoint jwtAuthEntryPoint;
 
+    @Autowired
+    private CustomAccessDeniedHandler customAccessDeniedHandler;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -40,9 +45,6 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    /**
-     * Chaîne de sécurité dédiée aux endpoints d'authentification (/api/auth/**)
-     */
     @Bean
     public SecurityFilterChain authSecurityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -56,9 +58,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Chaîne de sécurité pour les autres endpoints
-     */
     @Bean
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -73,7 +72,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/verify-barcode/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/search").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
-
                         .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
@@ -87,7 +85,10 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(eh -> eh.authenticationEntryPoint(jwtAuthEntryPoint))
+                .exceptionHandling(eh -> eh
+                        .authenticationEntryPoint(jwtAuthEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

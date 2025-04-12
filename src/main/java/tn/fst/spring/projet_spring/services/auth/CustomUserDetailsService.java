@@ -6,10 +6,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import tn.fst.spring.projet_spring.model.auth.Role;
 import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
-
-import java.util.stream.Collectors;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -22,12 +19,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         tn.fst.spring.projet_spring.model.auth.User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé avec l'email: " + email));
 
-        Role role = user.getRole();
-
         return User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
-                .authorities(role.getName())
+                .authorities(user.getRole().getName())
                 .accountExpired(false)
                 .accountLocked(false)
                 .credentialsExpired(false)
