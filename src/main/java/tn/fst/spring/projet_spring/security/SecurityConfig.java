@@ -12,7 +12,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import tn.fst.spring.projet_spring.security.jwt.JwtAuthenticationFilter;
 import tn.fst.spring.projet_spring.security.jwt.CustomAuthEntryPoint;
@@ -70,12 +69,15 @@ public class SecurityConfig {
                         // Produits
                         .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
-                        .requestMatchers(HttpMethod.POST, "/api/products/extract-barcode").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
-                        .requestMatchers(HttpMethod.GET, "/api/products/verify-barcode/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/search").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/products/verify-barcode/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
                         .requestMatchers(HttpMethod.PUT, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+
+                        // Extraction de code-barres depuis une image
+                        .requestMatchers(HttpMethod.POST, "/api/products/extract-barcode").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/products/extract-product").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
 
                         // Utilisateur connecté
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()

@@ -127,6 +127,13 @@ public class ProductController {
         return ResponseEntity.ok(productService.extractBarcode(file));
     }
 
+    @Operation(summary = "Extraire le code-barres depuis une image et retourner le produit correspondant si existant et tunisien")
+    @PostMapping(value = "/extract-product", consumes = "multipart/form-data")
+    public ResponseEntity<ProductResponse> extractProductFromBarcodeImage(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(productService.extractProductDetailsFromBarcodeImage(file));
+    }
+
+
 
 
 

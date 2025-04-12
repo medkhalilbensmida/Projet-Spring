@@ -186,5 +186,21 @@ public class ProductServiceImpl implements IProductService {
         return barcodeService.extractBarcodeFromImage(file);
     }
 
+    @Override
+    public ProductResponse extractProductDetailsFromBarcodeImage(MultipartFile file) {
+        BarcodeExtractionResponse extraction = barcodeService.extractBarcodeFromImage(file);
+
+        if (!extraction.isTunisian()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Code-barres détecté : " + extraction.getBarcode() + ". Ce n’est pas un produit tunisien (doit commencer par 619).");
+        }
+
+        Product product = productRepository.findByBarcode(extraction.getBarcode())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Aucun produit trouvé pour le code-barres : " + extraction.getBarcode()));
+
+        return convertToResponse(product);
+    }
+
 
 }

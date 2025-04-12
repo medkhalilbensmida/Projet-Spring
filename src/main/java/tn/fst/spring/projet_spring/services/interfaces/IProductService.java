@@ -15,5 +15,6 @@ public interface IProductService {
     Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest);
     ProductResponse updateProduct(Long id, ProductUpdateRequest productRequest);
     BarcodeExtractionResponse extractBarcode(MultipartFile file);
+    ProductResponse extractProductDetailsFromBarcodeImage(MultipartFile file);
 
 }
