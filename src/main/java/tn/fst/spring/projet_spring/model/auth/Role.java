@@ -6,9 +6,13 @@ import lombok.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+//to avoid stack overflow error when using toString or equalsAndHashCode
+@ToString(exclude = {"permissions"})
+@EqualsAndHashCode(exclude = {"permissions"})
 @Entity
 @Table(name = "roles")
 public class Role {

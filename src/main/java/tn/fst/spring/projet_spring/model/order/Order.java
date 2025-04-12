@@ -1,23 +1,34 @@
 package tn.fst.spring.projet_spring.model.order;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import tn.fst.spring.projet_spring.model.auth.User;
 import tn.fst.spring.projet_spring.model.logistics.Complaint;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
 import tn.fst.spring.projet_spring.model.payment.Invoice;
 import tn.fst.spring.projet_spring.model.payment.Payment;
+import tn.fst.spring.projet_spring.model.payment.PaymentMethod;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"items", "user", "payment", "invoice", "deliveryRequest", "complaints"})
+@EqualsAndHashCode(exclude = {"items", "user", "payment", "invoice", "deliveryRequest", "complaints"})
 @Entity
+@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String orderNumber;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -35,8 +46,12 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SaleType saleType;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderItem> items = new HashSet<>();
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
@@ -50,6 +65,11 @@ public class Order {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private Set<Complaint> complaints = new HashSet<>();
+    
+    // For door-to-door sales
+    private String customerAddress;
+    private String customerPhone;
+    private String salespersonNote;
 
     public void calculateTotal() {
         this.totalAmount = items.stream()
@@ -60,6 +80,16 @@ public class Order {
     public void confirmOrder() {
         this.status = OrderStatus.CONFIRMED;
     }
+    
+    public void addItem(OrderItem item) {
+        items.add(item);
+        item.setOrder(this);
+        calculateTotal();
+    }
+    
+    public void removeItem(OrderItem item) {
+        items.remove(item);
+        item.setOrder(null);
+        calculateTotal();
+    }
 }
-
-

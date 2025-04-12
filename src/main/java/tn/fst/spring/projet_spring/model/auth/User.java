@@ -8,9 +8,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+
+//to avoid stack overflow error when using toString or equalsAndHashCode
+@ToString(exclude = {"role"})
+@EqualsAndHashCode(exclude = {"role"})
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)

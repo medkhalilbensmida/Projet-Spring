@@ -15,7 +15,7 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PaymentType type;
+    private PaymentMethod type;
 
     @Column(nullable = false)
     private double amount;

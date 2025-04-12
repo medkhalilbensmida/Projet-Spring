@@ -1,15 +1,25 @@
 package tn.fst.spring.projet_spring.model.catalog;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import tn.fst.spring.projet_spring.model.donation.Donation;
 import tn.fst.spring.projet_spring.model.order.OrderItem;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+
+@Getter
+@Setter
+//to avoid stack overflow error when using toString or equalsAndHashCode
+@ToString(exclude = {"stock", "orderItems", "donations", "shelves"})
+@EqualsAndHashCode(exclude = {"stock", "orderItems", "donations", "shelves"})
+
 @Entity
+
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
