@@ -1,15 +1,14 @@
 package tn.fst.spring.projet_spring.services.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import tn.fst.spring.projet_spring.dto.products.ProductRequest;
-import tn.fst.spring.projet_spring.dto.products.ProductResponse;
-import tn.fst.spring.projet_spring.dto.products.ProductSearchRequest;
-import tn.fst.spring.projet_spring.dto.products.ProductUpdateRequest;
+import tn.fst.spring.projet_spring.dto.products.*;
 import tn.fst.spring.projet_spring.model.catalog.Category;
 import tn.fst.spring.projet_spring.model.catalog.Product;
 import tn.fst.spring.projet_spring.model.catalog.Stock;
@@ -18,6 +17,8 @@ import tn.fst.spring.projet_spring.repositories.products.ProductRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IProductService;
 
 import jakarta.persistence.criteria.Predicate;
+import tn.fst.spring.projet_spring.services.utils.BarcodeService;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +28,9 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements IProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+
+    @Autowired
+    private BarcodeService barcodeService;
 
     @Override
     public List<ProductResponse> getAllProducts() {
@@ -176,4 +180,11 @@ public class ProductServiceImpl implements IProductService {
                 .stockQuantity(product.getStock().getQuantity())
                 .build();
     }
+
+    @Override
+    public BarcodeExtractionResponse extractBarcode(MultipartFile file) {
+        return barcodeService.extractBarcodeFromImage(file);
+    }
+
+
 }

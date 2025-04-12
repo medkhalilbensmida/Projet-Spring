@@ -70,6 +70,7 @@ public class SecurityConfig {
                         // Produits
                         .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/products/extract-barcode").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/verify-barcode/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/search").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
