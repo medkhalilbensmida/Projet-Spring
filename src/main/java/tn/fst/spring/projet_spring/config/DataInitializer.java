@@ -18,7 +18,6 @@ public class DataInitializer {
     CommandLineRunner initDatabase(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            PermissionRepository permissionRepository,
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             StockRepository stockRepository,
@@ -26,81 +25,96 @@ public class DataInitializer {
             PasswordEncoder passwordEncoder) {
 
         return args -> {
-            // Suppression des données existantes
-            stockRepository.deleteAll();
-            productRepository.deleteAll();
-            shelfRepository.deleteAll();
-            categoryRepository.deleteAll();
-            userRepository.deleteAll();
-            roleRepository.deleteAll();
-            permissionRepository.deleteAll();
 
-            // Création et persistance des permissions
-            Permission perm1 = permissionRepository.save(new Permission("PRODUCT_READ"));
-            Permission perm2 = permissionRepository.save(new Permission("PRODUCT_WRITE"));
-            Permission perm3 = permissionRepository.save(new Permission("USER_READ"));
-            Permission perm4 = permissionRepository.save(new Permission("USER_WRITE"));
-            Permission perm5 = permissionRepository.save(new Permission("ORDER_MANAGE"));
+            // 1. Rôles nécessaires (déduits du cahier des charges)
+            insertRoleIfNotExist(roleRepository, "ROLE_ADMIN", "Administrateur principal");
+            insertRoleIfNotExist(roleRepository, "ROLE_CUSTOMER", "Client consommateur");
+            insertRoleIfNotExist(roleRepository, "ROLE_PRODUCT_MANAGER", "Responsable des produits");
+            insertRoleIfNotExist(roleRepository, "ROLE_SHELF_MANAGER", "Chef de rayon");
+            insertRoleIfNotExist(roleRepository, "ROLE_DELIVERY_MANAGER", "Responsable de livraison");
+            insertRoleIfNotExist(roleRepository, "ROLE_EVENT_MANAGER", "Responsable caritatif");
 
-            // Création des rôles avec les permissions persistées
-            Role adminRole = new Role("ROLE_ADMIN", new HashSet<>(List.of(perm1, perm2, perm3, perm4, perm5)));
-            Role customerRole = new Role("ROLE_CUSTOMER", new HashSet<>(List.of(perm1, perm5)));
-            Role productManagerRole = new Role("ROLE_PRODUCT_MANAGER", new HashSet<>(List.of(perm1, perm2)));
+            // 2. Utilisateurs initiaux
+            insertUserIfNotExist(userRepository, "admin", "admin@consummi.tn", "admin123", "ROLE_ADMIN", roleRepository, passwordEncoder);
+            insertUserIfNotExist(userRepository, "customer1", "customer1@mail.com", "customer123", "ROLE_CUSTOMER", roleRepository, passwordEncoder);
+            insertUserIfNotExist(userRepository, "pmanager", "pm@consummi.tn", "pm123", "ROLE_PRODUCT_MANAGER", roleRepository, passwordEncoder);
+            insertUserIfNotExist(userRepository, "chefRayon", "shelf@consummi.tn", "shelf123", "ROLE_SHELF_MANAGER", roleRepository, passwordEncoder);
+            insertUserIfNotExist(userRepository, "livreur", "delivery@consummi.tn", "delivery123", "ROLE_DELIVERY_MANAGER", roleRepository, passwordEncoder);
+            insertUserIfNotExist(userRepository, "event", "event@consummi.tn", "event123", "ROLE_EVENT_MANAGER", roleRepository, passwordEncoder);
 
-            roleRepository.saveAll(List.of(adminRole, customerRole, productManagerRole));
+            // 3. Catégories
+            insertCategoryIfNotExist(categoryRepository, "Alimentation", "Produits alimentaires tunisiens");
+            insertCategoryIfNotExist(categoryRepository, "Artisanat", "Produits artisanaux tunisiens");
+            insertCategoryIfNotExist(categoryRepository, "Cosmétique", "Produits cosmétiques naturels tunisiens");
 
-            // Création des utilisateurs avec constructeurs adaptés
-            userRepository.saveAll(List.of(
-                    new User("admin", "admin@consummi.tn", passwordEncoder.encode("admin123"), adminRole),
-                    new User("customer1", "customer1@mail.com", passwordEncoder.encode("customer123"), customerRole),
-                    new User("customer2", "customer2@mail.com", passwordEncoder.encode("customer123"), customerRole),
-                    new User("pmanager", "pm@consummi.tn", passwordEncoder.encode("pm123"), productManagerRole)
-            ));
+            // 4. Rayons
+            insertShelfIfNotExist(shelfRepository, "Rayon frais", "Réfrigéré");
+            insertShelfIfNotExist(shelfRepository, "Rayon sec", "Normal");
+            insertShelfIfNotExist(shelfRepository, "Rayon artisanal", "Normal");
 
-            // Création des catégories
-            Category alimentation = categoryRepository.save(new Category("Alimentation", "Produits alimentaires tunisiens"));
-            Category artisanat = categoryRepository.save(new Category("Artisanat", "Produits artisanaux tunisiens"));
-            Category cosmetique = categoryRepository.save(new Category("Cosmétique", "Produits cosmétiques naturels tunisiens"));
+            // 5. Produits initiaux
+            insertProductIfMissing("Huile d'olive Tunisienne", "6191234567890", "Huile extra vierge", 25.5, "Alimentation", 100, 10, "Rayon sec", categoryRepository, shelfRepository, productRepository, stockRepository);
+            insertProductIfMissing("Dattes Deglet Nour", "6192345678901", "Dattes premium 500g", 18.0, "Alimentation", 150, 20, "Rayon sec", categoryRepository, shelfRepository, productRepository, stockRepository);
+            insertProductIfMissing("Poterie de Nabeul", "6193456789012", "Pot décoratif", 45.0, "Artisanat", 30, 5, "Rayon artisanal", categoryRepository, shelfRepository, productRepository, stockRepository);
+            insertProductIfMissing("Savon d'Alep", "6194567890123", "Savon naturel", 12.5, "Cosmétique", 80, 15, "Rayon sec", categoryRepository, shelfRepository, productRepository, stockRepository);
+            insertProductIfMissing("Miel de thym", "6197890123456", "Miel naturel", 35.0, "Alimentation", 40, 8, "Rayon sec", categoryRepository, shelfRepository, productRepository, stockRepository);
 
-            // Création des rayons
-            Shelf shelf1 = shelfRepository.save(new Shelf("Rayon frais", "Réfrigéré"));
-            Shelf shelf2 = shelfRepository.save(new Shelf("Rayon sec", "Normal"));
-            Shelf shelf3 = shelfRepository.save(new Shelf("Rayon artisanal", "Normal"));
-
-            // Création des produits
-            createProduct("Huile d'olive Tunisienne", "6191234567890", "Huile d'olive extra vierge 1L", 25.5, alimentation, 100, 10, shelf2, productRepository, stockRepository);
-            createProduct("Dattes Deglet Nour", "6192345678901", "Dattes premium 500g", 18.0, alimentation, 150, 20, shelf2, productRepository, stockRepository);
-            createProduct("Poterie de Nabeul", "6193456789012", "Pot décoratif artisanal", 45.0, artisanat, 30, 5, shelf3, productRepository, stockRepository);
-            createProduct("Savon d'Alep", "6194567890123", "Savon naturel 200g", 12.5, cosmetique, 80, 15, shelf2, productRepository, stockRepository);
-            createProduct("Fromage de chèvre", "6195678901234", "Fromage frais 250g", 8.0, alimentation, 60, 10, shelf1, productRepository, stockRepository);
-            createProduct("Tapis berbère", "6196789012345", "Tapis artisanal 2x3m", 120.0, artisanat, 15, 3, shelf3, productRepository, stockRepository);
-            createProduct("Miel de thym", "6197890123456", "Miel naturel 500g", 35.0, alimentation, 40, 8, shelf2, productRepository, stockRepository);
-            createProduct("Argile ghassoul", "6198901234567", "Argile naturelle 1kg", 15.0, cosmetique, 50, 10, shelf2, productRepository, stockRepository);
-
-            System.out.println("✅ Initialisation terminée avec succès.");
+            System.out.println("✅ Initialisation terminée.");
         };
     }
 
-    private void createProduct(String name, String barcode, String description,
-                               double price, Category category, int quantity,
-                               int minThreshold, Shelf shelf,
-                               ProductRepository productRepository,
-                               StockRepository stockRepository) {
+    private void insertRoleIfNotExist(RoleRepository repo, String name, String description) {
+        if (repo.findByName(name).isEmpty()) {
+            repo.save(new Role(name, description));
+        }
+    }
 
-        Product product = new Product();
-        product.setName(name);
-        product.setBarcode(barcode);
-        product.setDescription(description);
-        product.setPrice(price);
-        product.setCategory(category);
-        product.getShelves().add(shelf);
+    private void insertUserIfNotExist(UserRepository repo, String username, String email, String pwd, String roleName,
+                                      RoleRepository roleRepo, PasswordEncoder encoder) {
+        if (repo.findByEmail(email).isEmpty()) {
+            Role role = roleRepo.findByName(roleName)
+                    .orElseThrow(() -> new IllegalArgumentException("Rôle introuvable : " + roleName));
+            repo.save(new User(username, email, encoder.encode(pwd), role));
+        }
+    }
 
-        product = productRepository.save(product);
+    private void insertCategoryIfNotExist(CategoryRepository repo, String name, String desc) {
+        if (repo.findByName(name).isEmpty()) {
+            repo.save(new Category(name, desc));
+        }
+    }
 
-        Stock stock = new Stock();
-        stock.setProduct(product);
-        stock.setQuantity(quantity);
-        stock.setMinThreshold(minThreshold);
-        stockRepository.save(stock);
+    private void insertShelfIfNotExist(ShelfRepository repo, String name, String desc) {
+        if (repo.findByName(name).isEmpty()) {
+            repo.save(new Shelf(name, desc));
+        }
+    }
+
+    private void insertProductIfMissing(String name, String barcode, String description, double price,
+                                        String categoryName, int quantity, int minThreshold, String shelfName,
+                                        CategoryRepository categoryRepo, ShelfRepository shelfRepo,
+                                        ProductRepository productRepo, StockRepository stockRepo) {
+        if (productRepo.findByBarcode(barcode).isEmpty()) {
+            Category category = categoryRepo.findByName(categoryName)
+                    .orElseThrow(() -> new IllegalArgumentException("Catégorie introuvable : " + categoryName));
+            Shelf shelf = shelfRepo.findByName(shelfName)
+                    .orElseThrow(() -> new IllegalArgumentException("Rayon introuvable : " + shelfName));
+
+            Product product = new Product();
+            product.setName(name);
+            product.setBarcode(barcode);
+            product.setDescription(description);
+            product.setPrice(price);
+            product.setCategory(category);
+            product.getShelves().add(shelf);
+
+            product = productRepo.save(product);
+
+            Stock stock = new Stock();
+            stock.setProduct(product);
+            stock.setQuantity(quantity);
+            stock.setMinThreshold(minThreshold);
+            stockRepo.save(stock);
+        }
     }
 }

@@ -3,16 +3,17 @@ package tn.fst.spring.projet_spring.model.auth;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.Set;
 
-@Getter
-@Setter
+
+//@Getter
+//@Setter
+
+//to avoid stack overflow error when using toString or equalsAndHashCode
+//@ToString(exclude = {"permissions"})
+//@EqualsAndHashCode(exclude = {"permissions"})
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-//to avoid stack overflow error when using toString or equalsAndHashCode
-@ToString(exclude = {"permissions"})
-@EqualsAndHashCode(exclude = {"permissions"})
 @Entity
 @Table(name = "roles")
 public class Role {
@@ -21,20 +22,12 @@ public class Role {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;
+    private String name; // Exemple: ROLE_ADMIN, ROLE_CUSTOMER
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "roles_permissions",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "permission_id")
-    )
-    private Set<Permission> permissions = new HashSet<>();
+    private String description;
 
-
-    // Constructeur pratique
-    public Role(String name, Set<Permission> permissions) {
+    public Role(String name, String description) {
         this.name = name;
-        this.permissions = permissions;
+        this.description = description;
     }
 }

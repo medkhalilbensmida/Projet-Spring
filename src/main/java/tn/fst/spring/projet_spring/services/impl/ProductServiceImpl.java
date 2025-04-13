@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.products.ProductRequest;
 import tn.fst.spring.projet_spring.dto.products.ProductResponse;
 import tn.fst.spring.projet_spring.dto.products.ProductSearchRequest;
+import tn.fst.spring.projet_spring.dto.products.ProductUpdateRequest;
 import tn.fst.spring.projet_spring.model.catalog.Category;
 import tn.fst.spring.projet_spring.model.catalog.Product;
 import tn.fst.spring.projet_spring.model.catalog.Stock;
@@ -37,18 +38,25 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produit introuvable  !"));
         return convertToResponse(product);
     }
 
     @Override
     public ProductResponse createProduct(ProductRequest productRequest) {
         if (!verifyTunisianBarcode(productRequest.getBarcode())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Tunisian barcode");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Code-barres invalide : doit commencer par 619 et contenir 13 chiffres.");
         }
 
-        Category category = categoryRepository.findById(productRequest.getCategoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+        Category category = categoryRepository.findByName(productRequest.getCategoryName())
+                .orElseThrow(() -> {
+                    List<String> categories = categoryRepository.findAll().stream()
+                            .map(Category::getName)
+                            .toList();
+                    String message = String.format("Catégorie << %s >> introuvable ! Voici la liste des catégories valides : %s",
+                            productRequest.getCategoryName(), categories);
+                    return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+                });
 
         Product product = new Product();
         product.setName(productRequest.getName());
@@ -68,17 +76,30 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public ProductResponse updateProduct(Long id, ProductRequest productRequest) {
+    public ProductResponse updateProduct(Long id, ProductUpdateRequest productRequest) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produit introuvable  !"));
 
-        Category category = categoryRepository.findById(productRequest.getCategoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
+        Category category = categoryRepository.findByName(productRequest.getCategoryName())
+                .orElseThrow(() -> {
+                    List<String> categories = categoryRepository.findAll().stream()
+                            .map(Category::getName)
+                            .toList();
+                    String message = String.format("Catégorie << %s >> introuvable ! Voici les catégories valides : %s",
+                            productRequest.getCategoryName(), categories);
+                    return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+                });
 
         product.setName(productRequest.getName());
+        product.setBarcode(productRequest.getBarcode());
         product.setDescription(productRequest.getDescription());
         product.setPrice(productRequest.getPrice());
         product.setCategory(category);
+
+        if (product.getStock() != null) {
+            product.getStock().setQuantity(productRequest.getStockQuantity());
+            product.getStock().setMinThreshold(productRequest.getMinThreshold());
+        }
 
         Product updatedProduct = productRepository.save(product);
         return convertToResponse(updatedProduct);
@@ -87,7 +108,7 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Produit introuvable  !");
         }
         productRepository.deleteById(id);
     }

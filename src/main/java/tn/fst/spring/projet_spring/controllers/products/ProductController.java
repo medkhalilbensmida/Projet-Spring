@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import tn.fst.spring.projet_spring.dto.products.ProductRequest;
 import tn.fst.spring.projet_spring.dto.products.ProductResponse;
 import tn.fst.spring.projet_spring.dto.products.ProductSearchRequest;
+import tn.fst.spring.projet_spring.dto.products.ProductUpdateRequest;
 import tn.fst.spring.projet_spring.services.interfaces.IProductService;
 
 import java.util.List;
@@ -21,69 +22,70 @@ import java.util.List;
 public class ProductController {
     private final IProductService productService;
 
-    @Operation(summary = "Get all products")
+    @Operation(summary = "Lister tous les produits")
     @GetMapping
     public ResponseEntity<List<ProductResponse>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
 
-    @Operation(summary = "Get product by ID")
+    @Operation(summary = "Récupérer un produit par son ID")
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProductById(@PathVariable Long id) {
         return ResponseEntity.ok(productService.getProductById(id));
     }
 
-    @Operation(summary = "Create a new product")
+    @Operation(summary = "Créer un nouveau produit")
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(
             @RequestBody ProductRequest productRequest) {
         return ResponseEntity.ok(productService.createProduct(productRequest));
     }
 
-    @Operation(summary = "Update a product")
+    @Operation(summary = "Mettre à jour un produit existant")
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long id,
-            @RequestBody ProductRequest productRequest) {
-        return ResponseEntity.ok(productService.updateProduct(id, productRequest));
+            @RequestBody ProductUpdateRequest updateRequest) {
+        return ResponseEntity.ok(productService.updateProduct(id, updateRequest));
     }
 
-    @Operation(summary = "Delete a product")
+
+    @Operation(summary = "Supprimer un produit par ID")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Verify Tunisian barcode")
+    @Operation(summary = "Vérifier si le code-barres est tunisien (commence par 619)")
     @GetMapping("/verify-barcode/{barcode}")
     public ResponseEntity<Boolean> verifyBarcode(@PathVariable String barcode) {
         return ResponseEntity.ok(productService.verifyTunisianBarcode(barcode));
     }
 
-    @Operation(summary = "Search products with advanced filters",
+    @Operation(summary = "Rechercher les produits avec des filtres avancés",
             parameters = {
-                    @Parameter(name = "name", in = ParameterIn.QUERY, description = "Product name filter"),
-                    @Parameter(name = "barcode", in = ParameterIn.QUERY, description = "Barcode filter"),
-                    @Parameter(name = "categoryName", in = ParameterIn.QUERY, description = "Category name filter",
+                    @Parameter(name = "name", in = ParameterIn.QUERY, description = "Filtrer par nom de produit"),
+                    @Parameter(name = "barcode", in = ParameterIn.QUERY, description = "Filtrer par code-barres"),
+                    @Parameter(name = "categoryName", in = ParameterIn.QUERY, description = "Filtrer par nom de catégorie",
                             schema = @Schema(type = "string", allowableValues = {"Alimentation", "Artisanat", "Cosmétique"})),
-                    @Parameter(name = "minPrice", in = ParameterIn.QUERY, description = "Minimum price filter",
+                    @Parameter(name = "minPrice", in = ParameterIn.QUERY, description = "Prix minimum",
                             schema = @Schema(type = "number", format = "double")),
-                    @Parameter(name = "maxPrice", in = ParameterIn.QUERY, description = "Maximum price filter",
+                    @Parameter(name = "maxPrice", in = ParameterIn.QUERY, description = "Prix maximum",
                             schema = @Schema(type = "number", format = "double")),
-                    @Parameter(name = "minStock", in = ParameterIn.QUERY, description = "Minimum stock quantity filter",
+                    @Parameter(name = "minStock", in = ParameterIn.QUERY, description = "Quantité de stock minimum",
                             schema = @Schema(type = "integer")),
-                    @Parameter(name = "maxStock", in = ParameterIn.QUERY, description = "Maximum stock quantity filter",
+                    @Parameter(name = "maxStock", in = ParameterIn.QUERY, description = "Quantité de stock maximum",
                             schema = @Schema(type = "integer")),
-                    @Parameter(name = "page", in = ParameterIn.QUERY, description = "Page number (0-based)",
+                    @Parameter(name = "page", in = ParameterIn.QUERY, description = "Numéro de page (0-based)",
                             schema = @Schema(type = "integer", defaultValue = "0")),
-                    @Parameter(name = "size", in = ParameterIn.QUERY, description = "Page size",
+                    @Parameter(name = "size", in = ParameterIn.QUERY, description = "Taille de la page",
                             schema = @Schema(type = "integer", defaultValue = "10")),
-                    @Parameter(name = "sortBy", in = ParameterIn.QUERY, description = "Field to sort by",
+                    @Parameter(name = "sortBy", in = ParameterIn.QUERY, description = "Champ de tri",
                             schema = @Schema(type = "string", allowableValues = {
                                     "name", "price", "stockQuantity", "category.name"
                             }, defaultValue = "name")),
-                    @Parameter(name = "sortDirection", in = ParameterIn.QUERY, description = "Sort direction",
+                    @Parameter(name = "sortDirection", in = ParameterIn.QUERY, description = "Ordre de tri",
                             schema = @Schema(type = "string", allowableValues = {
                                     "ASC", "DESC"
                             }, defaultValue = "ASC"))
