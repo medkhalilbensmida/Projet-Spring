@@ -10,7 +10,6 @@ import tn.fst.spring.projet_spring.model.logistics.Complaint;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
 import tn.fst.spring.projet_spring.model.payment.Invoice;
 import tn.fst.spring.projet_spring.model.payment.Payment;
-import tn.fst.spring.projet_spring.model.payment.PaymentMethod;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -43,9 +42,6 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
-
-    @Enumerated(EnumType.STRING)
-    private PaymentMethod paymentMethod;
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -54,7 +50,8 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<OrderItem> items = new HashSet<>();
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    // Modified cascade type to prevent accidental deletion
+    @OneToOne(mappedBy = "order", cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     private Payment payment;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
@@ -91,5 +88,16 @@ public class Order {
         items.remove(item);
         item.setOrder(null);
         calculateTotal();
+    }
+
+    /**
+     * Links this order with a payment and updates order status
+     * @param payment The payment to associate with this order
+     */
+    public void attachPayment(Payment payment) {
+        this.payment = payment;
+        if (payment != null && payment.isSuccessful()) {
+            this.status = OrderStatus.CONFIRMED;
+        }
     }
 }

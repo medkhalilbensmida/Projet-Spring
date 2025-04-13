@@ -47,7 +47,6 @@ public class OrderServiceImpl implements IOrderService {
         order.setStatus(OrderStatus.PENDING);
         order.setOrderNumber(generateOrderNumber());
         order.setSaleType(orderRequest.getSaleType());
-        order.setPaymentMethod(orderRequest.getPaymentMethod());
 
         // Set door-to-door specific information if applicable
         if (orderRequest.getSaleType() == SaleType.DOOR_TO_DOOR) {
@@ -197,7 +196,6 @@ public class OrderServiceImpl implements IOrderService {
                 .orderDate(order.getOrderDate())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
-                .paymentMethod(order.getPaymentMethod())
                 .saleType(order.getSaleType())
                 .isPaid(order.getPayment() != null)
                 .isInvoiced(order.getInvoice() != null)
