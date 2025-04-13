@@ -95,7 +95,7 @@ public class ShelfServiceImpl implements IShelfService {
 
     @Override
     public List<ShelfResponse> findShelvesByProduct(Long productId) {
-        return shelfRepository.findByProductId(productId)
+        return shelfRepository.findByPositionsProductId(productId)
                 .stream()
                 .map(this::toResponse)
                 .toList();

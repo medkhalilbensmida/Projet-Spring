@@ -1,33 +1,39 @@
-package tn.fst.spring.projet_spring.model.catalog;
+    package tn.fst.spring.projet_spring.model.catalog;
+
+    import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
-import lombok.Data;
+    import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-@Data
-@Entity
-public class Stock {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Data
+    @Entity
+    @EqualsAndHashCode(exclude = {"product"})
 
-    @OneToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    public class Stock {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    @Column(nullable = false)
-    private int quantity;
+        @OneToOne
+        @JoinColumn(name = "product_id", nullable = false)
+        @JsonIgnore
+        private Product product;
 
-    @Column(nullable = false)
-    private int minThreshold;
+        @Column(nullable = false)
+        private int quantity;
 
-    public boolean checkAvailability(int requestedQuantity) {
-        return quantity >= requestedQuantity;
-    }
+        @Column(nullable = false)
+        private int minThreshold;
 
-    public void updateQuantity(int delta) {
-        this.quantity += delta;
-        if (this.quantity < 0) {
-            this.quantity = 0;
+        public boolean checkAvailability(int requestedQuantity) {
+            return quantity >= requestedQuantity;
+        }
+
+        public void updateQuantity(int delta) {
+            this.quantity += delta;
+            if (this.quantity < 0) {
+                this.quantity = 0;
+            }
         }
     }
-}
