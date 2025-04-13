@@ -3,6 +3,7 @@ package tn.fst.spring.projet_spring.security;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -44,7 +45,11 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * 🔓 Chaîne pour /api/auth/** : tout est public (login, register, refresh)
+     */
     @Bean
+    @Order(1)
     public SecurityFilterChain authSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/auth/**")
@@ -57,7 +62,11 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * 🔐 Chaîne principale sécurisée pour toutes les autres routes
+     */
     @Bean
+    @Order(2)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/**")
@@ -86,6 +95,7 @@ public class SecurityConfig {
                         // Admin uniquement
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
 
+                        // Autres routes → protégées
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(eh -> eh
