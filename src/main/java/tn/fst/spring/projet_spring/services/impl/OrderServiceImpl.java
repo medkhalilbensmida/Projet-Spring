@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -205,4 +208,48 @@ public class OrderServiceImpl implements IOrderService {
                 .salespersonNote(order.getSalespersonNote())
                 .build();
     }
+
+    @Override
+@Transactional
+public OrderResponse cancelOrder(Long id) {
+    Order order = orderRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+    // Verify the order can be cancelled
+    if (order.getStatus() == OrderStatus.DELIVERED 
+            || order.getStatus() == OrderStatus.SHIPPED
+            || order.getStatus() == OrderStatus.CANCELLED) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "Order cannot be cancelled because it is already " + order.getStatus());
+    }
+
+    // Check if authenticated user is the owner of the order or has admin role
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    boolean isAdmin = authentication.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    
+    Long currentUserId = null;
+    if (authentication.getPrincipal() instanceof UserDetails) {
+        User user = userRepository.findByEmail(((UserDetails) authentication.getPrincipal()).getUsername())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        currentUserId = user.getId();
+    }
+    
+    if (!isAdmin && (currentUserId == null || !currentUserId.equals(order.getUser().getId()))) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+                "You are not authorized to cancel this order");
+    }
+
+    // Return items to stock
+    for (OrderItem item : order.getItems()) {
+        Stock stock = item.getProduct().getStock();
+        stock.updateQuantity(item.getQuantity());
+        stockRepository.save(stock);
+    }
+
+    order.setStatus(OrderStatus.CANCELLED);
+    Order updatedOrder = orderRepository.save(order);
+
+    return convertToResponse(updatedOrder);
+}
 }

@@ -19,4 +19,6 @@ public interface IOrderService {
     List<OrderResponse> findOrdersBySaleType(SaleType saleType);
     List<OrderResponse> findOrdersByDateRange(LocalDateTime start, LocalDateTime end);
     List<OrderResponse> findOrdersByUserAndDateRange(Long userId, LocalDateTime start, LocalDateTime end);
+    OrderResponse cancelOrder(Long id); 
+
 }

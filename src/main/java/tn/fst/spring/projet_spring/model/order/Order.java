@@ -101,4 +101,12 @@ public class Order {
             this.status = OrderStatus.CONFIRMED;
         }
     }
+    // Add this method to the Order class
+
+    /**
+     * Cancels the order and updates its status
+     */
+    public void cancel() {
+        this.status = OrderStatus.CANCELLED;
+    }
 }

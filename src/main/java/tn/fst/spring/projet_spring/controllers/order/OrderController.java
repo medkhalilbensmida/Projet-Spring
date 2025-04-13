@@ -71,8 +71,14 @@ public class OrderController {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, status));
     }
 
+    @PutMapping("/{id}/cancel")
+    @Operation(summary = "Cancel an order ")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.cancelOrder(id));
+    }
+
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete an order")
+    @Operation(summary = "Delete an order ")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();
