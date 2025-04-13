@@ -176,4 +176,5 @@ public class ProductServiceImpl implements IProductService {
                 .stockQuantity(product.getStock().getQuantity())
                 .build();
     }
+
 }

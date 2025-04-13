@@ -43,13 +43,9 @@ public class Product {
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
     private Stock stock;
 
-    @ManyToMany
-    @JoinTable(
-            name = "product_shelves",
-            joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "shelf_id")
-    )
-    private Set<Shelf> shelves = new HashSet<>();
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private Set<ProductPosition> positions = new HashSet<>();
+    
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private Set<OrderItem> orderItems = new HashSet<>();

@@ -1,30 +1,40 @@
-package tn.fst.spring.projet_spring.config;
+    package tn.fst.spring.projet_spring.config;
 
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import tn.fst.spring.projet_spring.model.auth.*;
-import tn.fst.spring.projet_spring.model.catalog.*;
-import tn.fst.spring.projet_spring.repositories.auth.*;
-import tn.fst.spring.projet_spring.repositories.products.*;
+    import org.springframework.boot.CommandLineRunner;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.security.crypto.password.PasswordEncoder;
+    import tn.fst.spring.projet_spring.model.auth.*;
+    import tn.fst.spring.projet_spring.model.catalog.*;
+    import tn.fst.spring.projet_spring.repositories.auth.*;
+    import tn.fst.spring.projet_spring.repositories.products.*;
 
-import java.util.*;
+    import java.util.*;
 
-@Configuration
-public class DataInitializer {
+    @Configuration
+    public class DataInitializer {
 
-    @Bean
-    CommandLineRunner initDatabase(
-            UserRepository userRepository,
-            RoleRepository roleRepository,
-            ProductRepository productRepository,
-            CategoryRepository categoryRepository,
-            StockRepository stockRepository,
-            ShelfRepository shelfRepository,
-            PasswordEncoder passwordEncoder) {
+        @Bean
+        CommandLineRunner initDatabase(
+                UserRepository userRepository,
+                RoleRepository roleRepository,
+                ProductRepository productRepository,
+                CategoryRepository categoryRepository,
+                StockRepository stockRepository,
+                ShelfRepository shelfRepository,
+                PasswordEncoder passwordEncoder,
+                ProductPositionRepository productPositionRepository
+                ) {
 
-        return args -> {
+            return args -> {
+                // Suppression des données existantes
+                stockRepository.deleteAll();
+                productPositionRepository.deleteAll();
+                productRepository.deleteAll();
+                shelfRepository.deleteAll();
+                categoryRepository.deleteAll();
+                roleRepository.deleteAll();
+                userRepository.deleteAll();
 
             // 1. Rôles nécessaires (déduits du cahier des charges)
             insertRoleIfNotExist(roleRepository, "ROLE_ADMIN", "Administrateur principal");
@@ -48,20 +58,27 @@ public class DataInitializer {
             insertCategoryIfNotExist(categoryRepository, "Cosmétique", "Produits cosmétiques naturels tunisiens");
 
             // 4. Rayons
-            insertShelfIfNotExist(shelfRepository, "Rayon frais", "Réfrigéré");
-            insertShelfIfNotExist(shelfRepository, "Rayon sec", "Normal");
-            insertShelfIfNotExist(shelfRepository, "Rayon artisanal", "Normal");
+            insertShelfIfNotExist(shelfRepository,"Rayon frais", "Réfrigéré", 1, 1, 2, 2);
+            insertShelfIfNotExist(shelfRepository,"Rayon sec", "Normal" ,1, 2, 2, 2);
+            insertShelfIfNotExist(shelfRepository,"Rayon artisanal", "Normal", 1, 3, 2, 2);
 
             // 5. Produits initiaux
-            insertProductIfMissing("Huile d'olive Tunisienne", "6191234567890", "Huile extra vierge", 25.5, "Alimentation", 100, 10, "Rayon sec", categoryRepository, shelfRepository, productRepository, stockRepository);
-            insertProductIfMissing("Dattes Deglet Nour", "6192345678901", "Dattes premium 500g", 18.0, "Alimentation", 150, 20, "Rayon sec", categoryRepository, shelfRepository, productRepository, stockRepository);
-            insertProductIfMissing("Poterie de Nabeul", "6193456789012", "Pot décoratif", 45.0, "Artisanat", 30, 5, "Rayon artisanal", categoryRepository, shelfRepository, productRepository, stockRepository);
-            insertProductIfMissing("Savon d'Alep", "6194567890123", "Savon naturel", 12.5, "Cosmétique", 80, 15, "Rayon sec", categoryRepository, shelfRepository, productRepository, stockRepository);
-            insertProductIfMissing("Miel de thym", "6197890123456", "Miel naturel", 35.0, "Alimentation", 40, 8, "Rayon sec", categoryRepository, shelfRepository, productRepository, stockRepository);
+                // createProduct("Huile d'olive Tunisienne", "6191234567890", "Huile d'olive extra vierge 1L",
+                // 25.5, alimentation, 100, 10, shelf2, productRepository, stockRepository,
+                // productPositionRepository, 1, 1);
+
+                // createProduct("Dattes Deglet Nour", "6192345678901", "Dattes premium 500g",
+                //             18.0, alimentation, 150, 20, shelf2, productRepository, stockRepository,
+                //             productPositionRepository, 2, 1);
+
+            // 5. Produits initiaux
+            insertProductIfNotExist("Huile d'olive Tunisienne", "6191234567890", "Huile d'olive extra vierge 1L",25.5, "Alimentation", 100, 10, Long.valueOf(1L),4,6, categoryRepository, shelfRepository,productRepository, stockRepository,productPositionRepository);
 
             System.out.println("✅ Initialisation terminée.");
         };
     }
+
+
 
     private void insertRoleIfNotExist(RoleRepository repo, String name, String description) {
         if (repo.findByName(name).isEmpty()) {
@@ -84,21 +101,29 @@ public class DataInitializer {
         }
     }
 
-    private void insertShelfIfNotExist(ShelfRepository repo, String name, String desc) {
+    private void insertShelfIfNotExist(ShelfRepository repo, String name, String type, int x,int y,int width,int height) {
         if (repo.findByName(name).isEmpty()) {
-            repo.save(new Shelf(name, desc));
+            Shelf shelf = new Shelf();
+            shelf.setName(name);
+            shelf.setType(type);
+            shelf.setX(x);
+            shelf.setY(y);
+            shelf.setWidth(width);
+            shelf.setHeight(height);
+            repo.save(shelf);
         }
     }
 
-    private void insertProductIfMissing(String name, String barcode, String description, double price,
-                                        String categoryName, int quantity, int minThreshold, String shelfName,
-                                        CategoryRepository categoryRepo, ShelfRepository shelfRepo,
-                                        ProductRepository productRepo, StockRepository stockRepo) {
-        if (productRepo.findByBarcode(barcode).isEmpty()) {
-            Category category = categoryRepo.findByName(categoryName)
+    private void insertProductIfNotExist( String name, String barcode,
+    String description, double price, String categoryName, int quantity, int minThreshold, Long shelfId,int x, int y,
+    CategoryRepository categoryRepository, ShelfRepository shelfRepository,
+    ProductRepository productRepository, StockRepository stockRepository,ProductPositionRepository productPositionRepository) {
+
+        if (productRepository.findByBarcode(barcode).isEmpty()) {
+            Category category = categoryRepository.findByName(categoryName)
                     .orElseThrow(() -> new IllegalArgumentException("Catégorie introuvable : " + categoryName));
-            Shelf shelf = shelfRepo.findByName(shelfName)
-                    .orElseThrow(() -> new IllegalArgumentException("Rayon introuvable : " + shelfName));
+            Shelf shelf = shelfRepository.findById(shelfId)
+                    .orElseThrow(() -> new IllegalArgumentException("Rayon introuvable : " + shelfId));
 
             Product product = new Product();
             product.setName(name);
@@ -106,15 +131,23 @@ public class DataInitializer {
             product.setDescription(description);
             product.setPrice(price);
             product.setCategory(category);
-            product.getShelves().add(shelf);
 
-            product = productRepo.save(product);
+            product = productRepository.save(product);
 
             Stock stock = new Stock();
             stock.setProduct(product);
             stock.setQuantity(quantity);
             stock.setMinThreshold(minThreshold);
-            stockRepo.save(stock);
+            stockRepository.save(stock);
+
+        // ✅ Create product position
+        ProductPosition position = new ProductPosition();
+        position.setProduct(product);
+        position.setShelf(shelf);
+        position.setX(x); // Set the X coordinate
+        position.setY(y); // Set the Y coordinate
+        productPositionRepository.save(position);
         }
     }
+
 }
