@@ -10,6 +10,7 @@ import tn.fst.spring.projet_spring.model.forum.ForumTopic;
 import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.repositories.forum.ForumTopicRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IForumTopicService;
+import tn.fst.spring.projet_spring.services.utils.SecurityUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,8 @@ public class ForumTopicServiceImpl implements IForumTopicService {
         if (forumTopicRepository.existsByTitle(request.getTitle())) {
             throw new RuntimeException("Un sujet avec ce titre existe déjà !");
         }
+        //pour le moment on passe id dans body mais il faut utiliser id de user connecte
+        /*User author = SecurityUtils.getCurrentUser(userRepository);*/
 
         User author = userRepository.findById(request.getAuthorId())
                 .orElseThrow(() -> new RuntimeException("User not found"));

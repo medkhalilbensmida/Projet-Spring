@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import tn.fst.spring.projet_spring.model.auth.*;
 import tn.fst.spring.projet_spring.model.catalog.*;
 import tn.fst.spring.projet_spring.repositories.auth.*;
+import tn.fst.spring.projet_spring.repositories.forum.ForumTopicRepository;
 import tn.fst.spring.projet_spring.repositories.products.*;
 
 import java.util.*;
@@ -23,6 +24,7 @@ public class DataInitializer {
             CategoryRepository categoryRepository,
             StockRepository stockRepository,
             ShelfRepository shelfRepository,
+            ForumTopicRepository forumTopicRepository,
             PasswordEncoder passwordEncoder) {
 
         return args -> {
@@ -31,6 +33,7 @@ public class DataInitializer {
             productRepository.deleteAll();
             shelfRepository.deleteAll();
             categoryRepository.deleteAll();
+            forumTopicRepository.deleteAll();
             userRepository.deleteAll();
             roleRepository.deleteAll();
             permissionRepository.deleteAll();
