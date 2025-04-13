@@ -15,4 +15,7 @@ public interface IProductService {
     void deleteProduct(Long id);
     boolean verifyTunisianBarcode(String barcode);
     Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest);
+
+    // List<ProductResponse> findProductsByShelf(Long shelfId);
+    // List<ProductResponse> findProductsByPosition(Long positionId);
 }
