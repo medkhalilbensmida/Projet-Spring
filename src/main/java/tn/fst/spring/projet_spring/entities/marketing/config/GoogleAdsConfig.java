@@ -14,6 +14,7 @@ public class GoogleAdsConfig {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    
     private String customerId;
     private String campaignName;
     private String adGroupName;

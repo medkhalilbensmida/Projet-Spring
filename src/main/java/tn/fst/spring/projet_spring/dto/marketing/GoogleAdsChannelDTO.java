@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class GoogleAdsChannelDTO extends AdvertisementChannelDTO {
-    private Long id;
     private String type;
     private String platform;
     private double averageCostPerView;
@@ -19,12 +18,11 @@ public class GoogleAdsChannelDTO extends AdvertisementChannelDTO {
     private String googleAdResourceName;
     private String googleCampaignResourceName;
 
-    public GoogleAdsChannelDTO(Long id, String type, String platform, double averageCostPerView,
+    public GoogleAdsChannelDTO( String type, String platform, double averageCostPerView,
                                String googleCustomerId, String googleCampaignName,
                                String googleAdGroupName, Long googleCompaignBudget,
                                String googleAdResourceName, String googleCampaignResourceName) {
         super();
-        this.id = id;
         this.type = type;
         this.platform = platform;
         this.averageCostPerView = averageCostPerView;

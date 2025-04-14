@@ -8,7 +8,6 @@
     @NoArgsConstructor
     @EqualsAndHashCode(callSuper = true)
     public class FacebookAdsChannelDTO extends AdvertisementChannelDTO {
-        private Long id;
         private String type;
         private String platform;
         private double averageCostPerView;
@@ -17,12 +16,11 @@
         private String compaignName;
 
 
-        public FacebookAdsChannelDTO(Long id, String type, String platform, double averageCostPerView,
+        public FacebookAdsChannelDTO(String type, String platform, double averageCostPerView,
                                 String facebookPageId, String facebookAccessToken,
                                 String compaignName) {
 
             super();
-            this.id = id;
             this.type = type;
             this.platform = platform;
             this.averageCostPerView = averageCostPerView;

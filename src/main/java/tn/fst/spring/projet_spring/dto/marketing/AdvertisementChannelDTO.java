@@ -22,8 +22,6 @@ import lombok.NoArgsConstructor;
     // Add other types if necessary
 })
 public class AdvertisementChannelDTO {
-    @JsonProperty("id")
-    private Long id;
     @JsonProperty("type")
     private String type;
     @JsonProperty("platform")

@@ -1,6 +1,7 @@
 package tn.fst.spring.projet_spring.entities.marketing;
     
 import jakarta.persistence.*;
+import jakarta.validation.constraints.AssertTrue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import tn.fst.spring.projet_spring.entities.marketing.config.GoogleAdsConfig;
@@ -33,4 +34,16 @@ public class AdvertisementChannel {
     
     @OneToMany(mappedBy = "channel")
     private Set<Advertisement> publicites;
+
+    public AdvertisementChannel(ChannelType type, String plateforme, double coutMoyenParVue) {
+        this.type = type;
+        this.plateforme = plateforme;
+        this.coutMoyenParVue = coutMoyenParVue;
+    }
+
+    @AssertTrue(message = "La configuration doit correspondre au type de canal")
+    public boolean isValidConfig() {
+        return (type == ChannelType.GOOGLE_ADS && googleAdsConfig != null && facebookAdsConfig == null)
+            || (type == ChannelType.FACEBOOK && facebookAdsConfig != null && googleAdsConfig == null);
+    }
 }
