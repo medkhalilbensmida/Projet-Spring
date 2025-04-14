@@ -1,6 +1,7 @@
 package tn.fst.spring.projet_spring.controllers.auth;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,14 +45,14 @@ public class UserController {
 
     @Operation(summary = "Mettre à jour son propre profil (email, mot de passe, username)")
     @PutMapping("/me")
-    public ResponseEntity<UserDto> updateCurrentUser(@RequestBody UserProfileUpdateDto profileDto, Authentication authentication) {
+    public ResponseEntity<UserDto> updateCurrentUser(@RequestBody @Valid UserProfileUpdateDto profileDto, Authentication authentication) {
         return ResponseEntity.ok(userService.updateCurrentUserProfile(authentication.getName(), profileDto));
     }
 
     @Operation(summary = "Mettre à jour les données d'un utilisateur (admin seulement, hors rôle)")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> updateUserByAdmin(@PathVariable Long id, @RequestBody UserAdminUpdateDto adminDto) {
+    public ResponseEntity<UserDto> updateUserByAdmin(@PathVariable Long id, @RequestBody @Valid UserAdminUpdateDto adminDto) {
         return ResponseEntity.ok(userService.updateUserByAdmin(id, adminDto));
     }
 

@@ -1,5 +1,6 @@
 package tn.fst.spring.projet_spring.controllers.auth;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -46,7 +47,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<MessageResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<MessageResponse> register(@RequestBody @Valid RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body(new MessageResponse("Email déjà utilisé"));
         }
