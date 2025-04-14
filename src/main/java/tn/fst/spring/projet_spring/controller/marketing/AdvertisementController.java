@@ -40,9 +40,22 @@ public class AdvertisementController {
     }
 
     @PostMapping
-    public AdvertisementDTO create(@RequestBody AdvertisementDTO advertisementDTO) {
+    public ResponseEntity<Object> create(@RequestBody AdvertisementDTO advertisementDTO) {
         Advertisement advertisement = toEntity(advertisementDTO);
-        return toDTO(service.save(advertisement));
+        try{
+            AdvertisementChannel channel = channelService.getById(advertisementDTO.getChannelId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid channel ID."));
+            advertisement.setChannel(channel);
+            TargetedAudience audience = audienceService.getById(advertisementDTO.getTargetedAudienceId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid audience ID."));
+            advertisement.setTargetedAudience(audience);
+            Advertisement savedAdvertisement = service.save(advertisement);
+            return ResponseEntity.ok(toDTO(savedAdvertisement));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid channel or audience ID.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("An error occurred while creating the advertisement, Please verify if the channel is running");
+        }
     }
 
     @PutMapping("/{id}")

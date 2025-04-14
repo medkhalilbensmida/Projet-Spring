@@ -53,13 +53,15 @@ public class AdvertisementChannelController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+   
+   
     @Operation(summary = "Create a new advertisement channel", description = "Create either a Google or Facebook advertisement channel")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Channel created", content = @Content(schema = @Schema(implementation = AdvertisementChannelDTO.class))),
         @ApiResponse(responseCode = "400", description = "Invalid channel type")
     })
     @PostMapping
-    public ResponseEntity<AdvertisementChannelDTO> create(
+    public ResponseEntity<Object> create(
         @RequestBody(
             description = "Channel DTO (Google or Facebook)",
             required = true,
@@ -91,17 +93,20 @@ public class AdvertisementChannelController {
                     """)
                 }
             )
-        ) AdvertisementChannelDTO channelDTO) {
+        ) @org.springframework.web.bind.annotation.RequestBody AdvertisementChannelDTO channelDTO) {
         try {
             AdvertisementChannel channel = toEntity(channelDTO);
             AdvertisementChannel savedChannel = service.save(channel);
             return ResponseEntity.ok(toDTO(savedChannel));
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid channel type: " + channelDTO.getType(), e);
+            return ResponseEntity.badRequest().body("Failed to create the channel , Please verify your google credentials");
         } catch (Exception e) {
+            // Handle other exceptions (e.g., database errors)
+            // Log the error (optional)
             throw new RuntimeException("Failed to create advertisement channel", e);
         }
     }
+
 
     @Operation(summary = "Update a channel by ID")
     @PutMapping("/{id}")
