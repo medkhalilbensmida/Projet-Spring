@@ -52,6 +52,11 @@ public class ProductServiceImpl implements IProductService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Code-barres invalide : doit commencer par 619 et contenir 13 chiffres.");
         }
 
+        if (productRepository.findByBarcode(productRequest.getBarcode()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    " Le code-barres ' " + productRequest.getBarcode() + " ' est déjà utilisé par un autre produit.");
+        }
+
         Category category = categoryRepository.findByName(productRequest.getCategoryName())
                 .orElseThrow(() -> {
                     List<String> categories = categoryRepository.findAll().stream()
@@ -201,6 +206,4 @@ public class ProductServiceImpl implements IProductService {
 
         return convertToResponse(product);
     }
-
-
 }
