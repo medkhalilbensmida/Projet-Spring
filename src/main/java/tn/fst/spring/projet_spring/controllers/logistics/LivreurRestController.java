@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tn.fst.spring.projet_spring.dto.logistics.CreateLivreurRequest;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurRequest;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurAvailabilityRequest;
 import tn.fst.spring.projet_spring.model.logistics.Livreur;
 import tn.fst.spring.projet_spring.services.logistics.ILivreurService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -71,6 +72,21 @@ public class LivreurRestController {
     @PutMapping("/{id}")
     public ResponseEntity<Livreur> updateLivreur(@PathVariable Long id, @Valid @RequestBody UpdateLivreurRequest livreurRequest) {
         Livreur updatedLivreur = livreurService.updateLivreur(id, livreurRequest);
+        if (updatedLivreur == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updatedLivreur);
+    }
+
+    @Operation(summary = "Update livreur availability", description = "Updates the availability status of a specific livreur.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Availability updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input (e.g., null availability)"),
+            @ApiResponse(responseCode = "404", description = "Livreur not found")
+    })
+    @PatchMapping("/{id}/disponibilite")
+    public ResponseEntity<Livreur> updateLivreurAvailability(@PathVariable Long id, @Valid @RequestBody UpdateLivreurAvailabilityRequest availabilityRequest) {
+        Livreur updatedLivreur = livreurService.updateLivreurAvailability(id, availabilityRequest.getDisponible());
         if (updatedLivreur == null) {
             return ResponseEntity.notFound().build();
         }

@@ -56,4 +56,15 @@ public class LivreurServiceImpl implements ILivreurService {
     public void removeLivreur(Long id) {
         livreurRepository.deleteById(id);
     }
+
+    @Override
+    public Livreur updateLivreurAvailability(Long id, boolean disponible) {
+        Optional<Livreur> optionalLivreur = livreurRepository.findById(id);
+        if (optionalLivreur.isEmpty()) {
+            return null; // Or throw exception
+        }
+        Livreur existingLivreur = optionalLivreur.get();
+        existingLivreur.setDisponible(disponible);
+        return livreurRepository.save(existingLivreur);
+    }
 } 

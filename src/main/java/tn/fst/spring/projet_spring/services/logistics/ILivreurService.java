@@ -9,6 +9,7 @@ public interface ILivreurService {
     List<Livreur> retrieveAllLivreurs();
     Livreur addLivreur(Livreur l);
     Livreur updateLivreur(Long id, UpdateLivreurRequest l);
+    Livreur updateLivreurAvailability(Long id, boolean disponible);
     Livreur retrieveLivreur(Long id);
     void removeLivreur(Long id);
 } 
