@@ -81,8 +81,8 @@
             insertProductIfNotExist("Huile d'olive Tunisienne", "6191234567890", "Huile d'olive extra vierge 1L",25.5, "Alimentation", 100, 10, Long.valueOf(1L),4,6, categoryRepository, shelfRepository,productRepository, stockRepository,productPositionRepository);
 
             // 6. Livreurs
-            Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", "ahmed.livreur@example.com", "12345678", true);
-            Livreur livreur2 = insertLivreurIfNotExist(livreurRepository, "Fatma Gharbi", "fatma.livreur@example.com", "87654321", true);
+            Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", true);
+            Livreur livreur2 = insertLivreurIfNotExist(livreurRepository, "Fatma Gharbi", true);
 
             // 7. Commandes et Livraisons pour tester les primes
             User customer = userRepository.findByEmail("customer1@mail.com")
@@ -184,14 +184,12 @@
         }
     }
 
-    private Livreur insertLivreurIfNotExist(LivreurRepository repo, String nom, String email, String telephone, boolean disponible) {
-        return repo.findByEmail(email).orElseGet(() -> {
+    private Livreur insertLivreurIfNotExist(LivreurRepository repo, String nom, boolean disponible) {
+        Optional<Livreur> existing = repo.findAll().stream().filter(l -> l.getNom().equals(nom)).findFirst();
+        return existing.orElseGet(() -> {
             Livreur livreur = new Livreur();
             livreur.setNom(nom);
-            livreur.setEmail(email);
-            livreur.setTelephone(telephone);
             livreur.setDisponible(disponible);
-            // Add other necessary fields if any (e.g., position, zone)
             return repo.save(livreur);
         });
     }
@@ -200,29 +198,23 @@
         Order order = new Order();
         order.setUser(customer);
         order.setOrderDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.CONFIRMED); // Or appropriate initial status
-        order.setSaleType(SaleType.ONLINE); // Assuming online sale
-        order.setPaymentMethod("Credit Card"); // Example payment method
-        order.setOrderNumber(orderNumber); // Set the unique order number
+        order.setStatus(OrderStatus.CONFIRMED);
+        order.setSaleType(SaleType.ONLINE);
+        order.setOrderNumber(orderNumber);
+        order.setCustomerAddress("Default Address");
+        order.setCustomerPhone("00000000");
 
-        // Create order item
         OrderItem item = new OrderItem();
         item.setOrder(order);
         item.setProduct(product);
         item.setQuantity(quantity);
-        item.setPrice(BigDecimal.valueOf(product.getPrice())); // Use product price
+        item.setUnitPrice(product.getPrice());
 
-        // Set the bidirectional relationship
-        order.setOrderItems(Collections.singletonList(item));
+        order.getItems().add(item);
 
-        // Calculate total amount (simple example)
-        order.setTotalAmount(item.getPrice().multiply(BigDecimal.valueOf(quantity)));
+        order.setTotalAmount(item.getUnitPrice() * quantity);
 
-        // Save Order first (to get ID for OrderItem foreign key)
         Order savedOrder = orderRepo.save(order);
-        // OrderItem is usually saved via Cascade from Order, but saving explicitly if not configured
-        itemRepo.save(item); // Make sure itemRepo is injected if CascadeType.PERSIST or ALL is not set on Order.orderItems
-
         return savedOrder;
     }
 
@@ -230,13 +222,8 @@
         DeliveryRequest request = new DeliveryRequest();
         request.setOrder(order);
         request.setLivreur(livreur);
-        request.setDeliveryAddress(order.getUser().getAddress()); // Assuming user has an address field
         request.setStatus(status);
-        request.setDeliveryFees(BigDecimal.valueOf(fees));
-        request.setRequestedAt(LocalDateTime.now());
-        if (status == DeliveryStatus.DELIVERED) {
-            request.setDeliveredAt(LocalDateTime.now()); // Set delivered time if applicable
-        }
+        request.setDeliveryFee(fees);
         deliveryRepo.save(request);
     }
 
