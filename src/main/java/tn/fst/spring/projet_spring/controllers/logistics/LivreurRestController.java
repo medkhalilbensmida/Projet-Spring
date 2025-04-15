@@ -103,4 +103,21 @@ public class LivreurRestController {
         livreurService.removeLivreur(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Calculate livreur prime (bonus)", description = "Calculates the prime (bonus) for a specific livreur based on their completed deliveries.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully calculated prime"),
+            @ApiResponse(responseCode = "404", description = "Livreur not found")
+    })
+    @GetMapping("/{id}/prime")
+    public ResponseEntity<Double> getLivreurPrime(@PathVariable Long id) {
+        try {
+            double prime = livreurService.calculatePrime(id);
+            return ResponseEntity.ok(prime);
+        } catch (RuntimeException e) {
+            // Assuming the service throws RuntimeException for not found livreur
+            // A more specific exception handling might be needed
+            return ResponseEntity.notFound().build();
+        }
+    }
 } 

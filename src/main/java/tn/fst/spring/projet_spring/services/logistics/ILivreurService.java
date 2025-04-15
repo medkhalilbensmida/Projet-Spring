@@ -12,4 +12,11 @@ public interface ILivreurService {
     Livreur updateLivreurAvailability(Long id, boolean disponible);
     Livreur retrieveLivreur(Long id);
     void removeLivreur(Long id);
+
+    /**
+     * Calculates the bonus (prime) for a livreur based on completed deliveries.
+     * @param livreurId The ID of the livreur.
+     * @return The calculated prime amount.
+     */
+    double calculatePrime(Long livreurId);
 } 

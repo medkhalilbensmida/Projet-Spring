@@ -16,8 +16,8 @@ public class DeliveryRequest {
     private Order order;
 
     @ManyToOne
-    @JoinColumn(name = "delivery_person_id")
-    private DeliveryPerson deliveryPerson;
+    @JoinColumn(name = "livreur_id")
+    private Livreur livreur;
 
     @Column(nullable = false)
     private double deliveryFee;
@@ -26,8 +26,8 @@ public class DeliveryRequest {
     @Column(nullable = false)
     private DeliveryStatus status;
 
-    public void assignDeliveryPerson(DeliveryPerson person) {
-        this.deliveryPerson = person;
+    public void assignLivreur(Livreur livreur) {
+        this.livreur = livreur;
         this.status = DeliveryStatus.ASSIGNED;
     }
 
