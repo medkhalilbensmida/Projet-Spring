@@ -3,10 +3,12 @@ package tn.fst.spring.projet_spring.services.logistics;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurRequest;
 import tn.fst.spring.projet_spring.model.logistics.Livreur;
 import tn.fst.spring.projet_spring.repositories.logistics.LivreurRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -26,10 +28,22 @@ public class LivreurServiceImpl implements ILivreurService {
     }
 
     @Override
-    public Livreur updateLivreur(Livreur l) {
-        // Ensure the livreur exists before updating
-        retrieveLivreur(l.getId());
-        return livreurRepository.save(l);
+    public Livreur updateLivreur(Long id, UpdateLivreurRequest livreurRequest) {
+        Optional<Livreur> optionalLivreur = livreurRepository.findById(id);
+        if (optionalLivreur.isEmpty()) {
+            return null;
+        }
+
+        Livreur existingLivreur = optionalLivreur.get();
+
+        if (livreurRequest.getNom() != null) {
+            existingLivreur.setNom(livreurRequest.getNom());
+        }
+        if (livreurRequest.getDisponible() != null) {
+            existingLivreur.setDisponible(livreurRequest.getDisponible());
+        }
+
+        return livreurRepository.save(existingLivreur);
     }
 
     @Override

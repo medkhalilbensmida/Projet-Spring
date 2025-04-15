@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tn.fst.spring.projet_spring.dto.logistics.CreateLivreurRequest;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurRequest;
 import tn.fst.spring.projet_spring.model.logistics.Livreur;
 import tn.fst.spring.projet_spring.services.logistics.ILivreurService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,13 +69,11 @@ public class LivreurRestController {
             @ApiResponse(responseCode = "404", description = "Livreur not found")
     })
     @PutMapping("/{id}")
-    public ResponseEntity<Livreur> updateLivreur(@PathVariable Long id, @RequestBody Livreur livreur) {
-        if (livreur.getId() == null) {
-            livreur.setId(id);
-        } else if (!livreur.getId().equals(id)) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<Livreur> updateLivreur(@PathVariable Long id, @Valid @RequestBody UpdateLivreurRequest livreurRequest) {
+        Livreur updatedLivreur = livreurService.updateLivreur(id, livreurRequest);
+        if (updatedLivreur == null) {
+            return ResponseEntity.notFound().build();
         }
-        Livreur updatedLivreur = livreurService.updateLivreur(livreur);
         return ResponseEntity.ok(updatedLivreur);
     }
 
