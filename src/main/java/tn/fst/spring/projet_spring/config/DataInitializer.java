@@ -6,10 +6,17 @@
     import org.springframework.security.crypto.password.PasswordEncoder;
     import tn.fst.spring.projet_spring.model.auth.*;
     import tn.fst.spring.projet_spring.model.catalog.*;
+    import tn.fst.spring.projet_spring.model.order.*;
+    import tn.fst.spring.projet_spring.model.logistics.*;
     import tn.fst.spring.projet_spring.repositories.auth.*;
     import tn.fst.spring.projet_spring.repositories.products.*;
+    import tn.fst.spring.projet_spring.repositories.order.*;
+    import tn.fst.spring.projet_spring.repositories.logistics.*;
 
     import java.util.*;
+    import java.time.LocalDateTime;
+    import java.util.Collections;
+    import java.math.BigDecimal;
 
     @Configuration
     public class DataInitializer {
@@ -23,11 +30,19 @@
                 StockRepository stockRepository,
                 ShelfRepository shelfRepository,
                 PasswordEncoder passwordEncoder,
-                ProductPositionRepository productPositionRepository
+                ProductPositionRepository productPositionRepository,
+                LivreurRepository livreurRepository,
+                OrderRepository orderRepository,
+                OrderItemRepository orderItemRepository,
+                DeliveryRequestRepository deliveryRequestRepository
                 ) {
 
             return args -> {
                 // Suppression des données existantes
+                deliveryRequestRepository.deleteAll();
+                orderItemRepository.deleteAll();
+                orderRepository.deleteAll();
+                livreurRepository.deleteAll();
                 stockRepository.deleteAll();
                 productPositionRepository.deleteAll();
                 productRepository.deleteAll();
@@ -63,22 +78,41 @@
             insertShelfIfNotExist(shelfRepository,"Rayon artisanal", "Normal", 1, 3, 2, 2);
 
             // 5. Produits initiaux
-                // createProduct("Huile d'olive Tunisienne", "6191234567890", "Huile d'olive extra vierge 1L",
-                // 25.5, alimentation, 100, 10, shelf2, productRepository, stockRepository,
-                // productPositionRepository, 1, 1);
-
-                // createProduct("Dattes Deglet Nour", "6192345678901", "Dattes premium 500g",
-                //             18.0, alimentation, 150, 20, shelf2, productRepository, stockRepository,
-                //             productPositionRepository, 2, 1);
-
-            // 5. Produits initiaux
             insertProductIfNotExist("Huile d'olive Tunisienne", "6191234567890", "Huile d'olive extra vierge 1L",25.5, "Alimentation", 100, 10, Long.valueOf(1L),4,6, categoryRepository, shelfRepository,productRepository, stockRepository,productPositionRepository);
 
-            System.out.println("✅ Initialisation terminée.");
+            // 6. Livreurs
+            Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", "ahmed.livreur@example.com", "12345678", true);
+            Livreur livreur2 = insertLivreurIfNotExist(livreurRepository, "Fatma Gharbi", "fatma.livreur@example.com", "87654321", true);
+
+            // 7. Commandes et Livraisons pour tester les primes
+            User customer = userRepository.findByEmail("customer1@mail.com")
+                                          .orElseThrow(() -> new RuntimeException("Customer 'customer1@mail.com' not found"));
+            Product huileOlive = productRepository.findByBarcode("6191234567890")
+                                                 .orElseThrow(() -> new RuntimeException("Product 'Huile d'olive Tunisienne' not found"));
+
+            // Commande 1 (Livrée par Ahmed)
+            Order order1 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 2, "ORD001");
+            createDeliveryRequest(deliveryRequestRepository, order1, livreur1, DeliveryStatus.DELIVERED, 5.0);
+
+            // Commande 2 (Livrée par Ahmed)
+            Order order2 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 1, "ORD002");
+            createDeliveryRequest(deliveryRequestRepository, order2, livreur1, DeliveryStatus.DELIVERED, 5.0);
+
+            // Commande 3 (En cours par Fatma)
+            Order order3 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 3, "ORD003");
+            createDeliveryRequest(deliveryRequestRepository, order3, livreur2, DeliveryStatus.IN_TRANSIT, 6.0);
+
+            // Commande 4 (Assignée à Ahmed)
+            Order order4 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 1, "ORD004");
+            createDeliveryRequest(deliveryRequestRepository, order4, livreur1, DeliveryStatus.ASSIGNED, 5.0);
+
+            // Commande 5 (Livrée par Fatma)
+            Order order5 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 2, "ORD005");
+            createDeliveryRequest(deliveryRequestRepository, order5, livreur2, DeliveryStatus.DELIVERED, 6.0);
+
+            System.out.println("✅ Initialisation terminée (avec commandes et livraisons).");
         };
     }
-
-
 
     private void insertRoleIfNotExist(RoleRepository repo, String name, String description) {
         if (repo.findByName(name).isEmpty()) {
@@ -148,6 +182,62 @@
         position.setY(y); // Set the Y coordinate
         productPositionRepository.save(position);
         }
+    }
+
+    private Livreur insertLivreurIfNotExist(LivreurRepository repo, String nom, String email, String telephone, boolean disponible) {
+        return repo.findByEmail(email).orElseGet(() -> {
+            Livreur livreur = new Livreur();
+            livreur.setNom(nom);
+            livreur.setEmail(email);
+            livreur.setTelephone(telephone);
+            livreur.setDisponible(disponible);
+            // Add other necessary fields if any (e.g., position, zone)
+            return repo.save(livreur);
+        });
+    }
+
+    private Order createOrder(OrderRepository orderRepo, OrderItemRepository itemRepo, User customer, Product product, int quantity, String orderNumber) {
+        Order order = new Order();
+        order.setUser(customer);
+        order.setOrderDate(LocalDateTime.now());
+        order.setStatus(OrderStatus.CONFIRMED); // Or appropriate initial status
+        order.setSaleType(SaleType.ONLINE); // Assuming online sale
+        order.setPaymentMethod("Credit Card"); // Example payment method
+        order.setOrderNumber(orderNumber); // Set the unique order number
+
+        // Create order item
+        OrderItem item = new OrderItem();
+        item.setOrder(order);
+        item.setProduct(product);
+        item.setQuantity(quantity);
+        item.setPrice(BigDecimal.valueOf(product.getPrice())); // Use product price
+
+        // Set the bidirectional relationship
+        order.setOrderItems(Collections.singletonList(item));
+
+        // Calculate total amount (simple example)
+        order.setTotalAmount(item.getPrice().multiply(BigDecimal.valueOf(quantity)));
+
+        // Save Order first (to get ID for OrderItem foreign key)
+        Order savedOrder = orderRepo.save(order);
+        // OrderItem is usually saved via Cascade from Order, but saving explicitly if not configured
+        itemRepo.save(item); // Make sure itemRepo is injected if CascadeType.PERSIST or ALL is not set on Order.orderItems
+
+        return savedOrder;
+    }
+
+    private void createDeliveryRequest(DeliveryRequestRepository deliveryRepo, Order order, Livreur livreur, DeliveryStatus status, double fees) {
+        DeliveryRequest request = new DeliveryRequest();
+        request.setOrder(order);
+        request.setLivreur(livreur);
+        request.setDeliveryAddress(order.getUser().getAddress()); // Assuming user has an address field
+        request.setStatus(status);
+        request.setDeliveryFees(BigDecimal.valueOf(fees));
+        request.setRequestedAt(LocalDateTime.now());
+        if (status == DeliveryStatus.DELIVERED) {
+            request.setDeliveredAt(LocalDateTime.now()); // Set delivered time if applicable
+        }
+        deliveryRepo.save(request);
     }
 
 }
