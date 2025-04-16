@@ -76,6 +76,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
 
+
+                        // Orders endpoints - secure for customers vs admins
+                        .requestMatchers(HttpMethod.GET, "/api/orders").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/cancel").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
+
+                        // Payments endpoints - secure for customers vs admins
+                        .requestMatchers(HttpMethod.GET, "/api/payments").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/payments/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/payments").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/payments/**").hasRole("ADMIN")
+
+
                         // Utilisateur connecté
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()

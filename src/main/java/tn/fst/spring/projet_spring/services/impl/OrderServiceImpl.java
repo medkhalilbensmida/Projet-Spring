@@ -1,12 +1,7 @@
 package tn.fst.spring.projet_spring.services.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,12 +17,14 @@ import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.repositories.order.OrderRepository;
 import tn.fst.spring.projet_spring.repositories.products.ProductRepository;
 import tn.fst.spring.projet_spring.repositories.products.StockRepository;
+import tn.fst.spring.projet_spring.security.SecurityUtil;
 import tn.fst.spring.projet_spring.services.interfaces.IOrderService;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,15 +34,33 @@ public class OrderServiceImpl implements IOrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final StockRepository stockRepository;
+    private final SecurityUtil securityUtil;
+
 
     @Override
     @Transactional
     public OrderResponse createOrder(OrderRequest orderRequest) {
-        User user = userRepository.findById(orderRequest.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        // For order creation, we need to ensure the user is creating the order for themselves
+        User currentUser = securityUtil.getCurrentUser();
+        User targetUser;
+
+        if (orderRequest.getUserId() != null) {
+            // If userId is specified, check if it's the same as current user or the user is admin
+            if (!securityUtil.isAdmin() && !currentUser.getId().equals(orderRequest.getUserId())) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "You are not authorized to create orders for other users"
+                );
+            }
+            targetUser = userRepository.findById(orderRequest.getUserId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        } else {
+            // If userId is not specified, use the current user's ID
+            targetUser = currentUser;
+        }
 
         Order order = new Order();
-        order.setUser(user);
+        order.setUser(targetUser);
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatus.PENDING);
         order.setOrderNumber(generateOrderNumber());
@@ -94,21 +109,45 @@ public class OrderServiceImpl implements IOrderService {
     public OrderResponse getOrderById(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        // Check if user can access this order
+        securityUtil.checkOrderOwnership(order);
+
         return convertToResponse(order);
     }
+
+
+
 
     @Override
     public OrderResponse getOrderByNumber(String orderNumber) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        // Check if user can access this order
+        securityUtil.checkOrderOwnership(order);
+
         return convertToResponse(order);
     }
 
+
     @Override
     public List<OrderResponse> getOrdersByUser(Long userId) {
+        // If not admin and querying other user's orders, throw exception
+        if (!securityUtil.isAdmin()) {
+            User currentUser = securityUtil.getCurrentUser();
+            if (!currentUser.getId().equals(userId)) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "You are not authorized to access orders for other users"
+                );
+            }
+        }
+
         if (!userRepository.existsById(userId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
+
         return orderRepository.findByUserId(userId).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
@@ -116,26 +155,46 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public List<OrderResponse> getAllOrders() {
+        // This method is already secured at controller level to admin only
         return orderRepository.findAll().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
+
 
     @Override
     @Transactional
     public OrderResponse updateOrderStatus(Long id, OrderStatus status) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        // Only admins can update order status
+        if (!securityUtil.isAdmin()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only administrators can update order status"
+            );
+        }
+
         order.setStatus(status);
         Order updatedOrder = orderRepository.save(order);
         return convertToResponse(updatedOrder);
     }
+
 
     @Override
     @Transactional
     public void deleteOrder(Long id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        // Only admins can delete orders
+        if (!securityUtil.isAdmin()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Only administrators can delete orders"
+            );
+        }
 
         // Return items to stock
         for (OrderItem item : order.getItems()) {
@@ -147,35 +206,107 @@ public class OrderServiceImpl implements IOrderService {
         orderRepository.delete(order);
     }
 
+
     @Override
     public List<OrderResponse> findOrdersBySaleType(SaleType saleType) {
-        return orderRepository.findBySaleType(saleType)
-                .stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        if (securityUtil.isAdmin()) {
+            return orderRepository.findBySaleType(saleType)
+                    .stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+        } else {
+            User currentUser = securityUtil.getCurrentUser();
+            return orderRepository.findBySaleTypeAndUserId(saleType, currentUser.getId())
+                    .stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override
     public List<OrderResponse> findOrdersByDateRange(LocalDateTime start, LocalDateTime end) {
-        return orderRepository.findByOrderDateBetween(start, end)
-                .stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+        if (securityUtil.isAdmin()) {
+            return orderRepository.findByOrderDateBetween(start, end)
+                    .stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+        } else {
+            User currentUser = securityUtil.getCurrentUser();
+            return orderRepository.findByOrderDateBetweenAndUserId(start, end, currentUser.getId())
+                    .stream()
+                    .map(this::convertToResponse)
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override
     public List<OrderResponse> findOrdersByUserAndDateRange(Long userId, LocalDateTime start, LocalDateTime end) {
-        if (!userRepository.existsById(userId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        // If not admin and querying other user's orders, throw exception
+        if (!securityUtil.isAdmin()) {
+            User currentUser = securityUtil.getCurrentUser();
+            if (!currentUser.getId().equals(userId)) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "You are not authorized to access orders for other users"
+                );
+            }
         }
+
         return orderRepository.findByUserIdAndOrderDateBetween(userId, start, end)
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
+
+    @Override
+    @Transactional
+    public OrderResponse cancelOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        // Enhanced validation for order status
+        if (order.getStatus() == OrderStatus.CONFIRMED ||
+                order.getStatus() == OrderStatus.SHIPPED ||
+                order.getStatus() == OrderStatus.DELIVERED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Order cannot be cancelled because it is already " + order.getStatus());
+        }
+
+        // Check if order is already cancelled
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Order is already cancelled.");
+        }
+
+        // Check if authenticated user is the owner of the order or has admin role
+        if (!securityUtil.isAdmin()) {
+            User currentUser = securityUtil.getCurrentUser();
+            if (!currentUser.getId().equals(order.getUser().getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "You are not authorized to cancel this order");
+            }
+        }
+
+        // Return items to stock
+        for (OrderItem item : order.getItems()) {
+            Stock stock = item.getProduct().getStock();
+            stock.updateQuantity(item.getQuantity());
+            stockRepository.save(stock);
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        Order updatedOrder = orderRepository.save(order);
+
+        return convertToResponse(updatedOrder);
+    }
+
+
     private String generateOrderNumber() {
-        return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String datePart = LocalDateTime.now().format(formatter);
+        String randomPart = String.format("%04d", new Random().nextInt(10000));
+        return "ORD-" + datePart + "-" + randomPart;
     }
 
     private OrderResponse convertToResponse(Order order) {
@@ -209,47 +340,5 @@ public class OrderServiceImpl implements IOrderService {
                 .build();
     }
 
-    @Override
-@Transactional
-public OrderResponse cancelOrder(Long id) {
-    Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
 
-    // Verify the order can be cancelled
-    if (order.getStatus() == OrderStatus.DELIVERED 
-            || order.getStatus() == OrderStatus.SHIPPED
-            || order.getStatus() == OrderStatus.CANCELLED) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "Order cannot be cancelled because it is already " + order.getStatus());
-    }
-
-    // Check if authenticated user is the owner of the order or has admin role
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    boolean isAdmin = authentication.getAuthorities().stream()
-            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-    
-    Long currentUserId = null;
-    if (authentication.getPrincipal() instanceof UserDetails) {
-        User user = userRepository.findByEmail(((UserDetails) authentication.getPrincipal()).getUsername())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-        currentUserId = user.getId();
-    }
-    
-    if (!isAdmin && (currentUserId == null || !currentUserId.equals(order.getUser().getId()))) {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
-                "You are not authorized to cancel this order");
-    }
-
-    // Return items to stock
-    for (OrderItem item : order.getItems()) {
-        Stock stock = item.getProduct().getStock();
-        stock.updateQuantity(item.getQuantity());
-        stockRepository.save(stock);
-    }
-
-    order.setStatus(OrderStatus.CANCELLED);
-    Order updatedOrder = orderRepository.save(order);
-
-    return convertToResponse(updatedOrder);
-}
 }
