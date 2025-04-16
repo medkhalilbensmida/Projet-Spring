@@ -19,4 +19,5 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     List<Order> findBySaleType(SaleType saleType);
     List<Order> findByOrderDateBetween(LocalDateTime start, LocalDateTime end);
     List<Order> findByUserIdAndOrderDateBetween(Long userId, LocalDateTime start, LocalDateTime end);
+    boolean existsByOrderNumber(String orderNumber);
 }

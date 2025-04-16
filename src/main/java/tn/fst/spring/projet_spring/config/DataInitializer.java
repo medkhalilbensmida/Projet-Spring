@@ -34,19 +34,8 @@ public class DataInitializer {
             OrderItemRepository orderItemRepository,
             DeliveryRequestRepository deliveryRequestRepository
     ) {
-        return args -> {
-            deliveryRequestRepository.deleteAll();
-            orderItemRepository.deleteAll();
-            orderRepository.deleteAll();
-            livreurRepository.deleteAll();
-            stockRepository.deleteAll();
-            productPositionRepository.deleteAll();
-            productRepository.deleteAll();
-            shelfRepository.deleteAll();
-            categoryRepository.deleteAll();
-            roleRepository.deleteAll();
-            userRepository.deleteAll();
 
+        return args -> {
             insertRoleIfNotExist(roleRepository, "ROLE_ADMIN", "Administrateur principal");
             insertRoleIfNotExist(roleRepository, "ROLE_CUSTOMER", "Client consommateur");
             insertRoleIfNotExist(roleRepository, "ROLE_PRODUCT_MANAGER", "Responsable des produits");
@@ -84,8 +73,41 @@ public class DataInitializer {
             insertShelfIfNotExist(shelfRepository, "Rayon épicerie", "Normal", 3, 6, 3, 3);
             insertShelfIfNotExist(shelfRepository, "Rayon décoration", "Fragile", 6, 0, 3, 3);
 
-            insertProduct("Huile d'olive Tunisienne", "6191234567890", "Huile extra vierge", 25.5, "Alimentation", 100, 10, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+// 5. Produits initiaux (fortement enrichi)
 
+// Alimentation
+            insertProduct("Huile d'olive Tunisienne", "6191234567890", "Huile extra vierge", 25.5, "Alimentation", 100, 10, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Dattes Deglet Nour", "6192345678901", "Dattes premium 500g", 18.0, "Alimentation", 150, 20, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Miel de thym", "6197890123456", "Miel naturel", 35.0, "Alimentation", 40, 8, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Harissa", "6191234509876", "Pâte de piment 250g", 8.5, "Alimentation", 75, 15, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Couscous fin", "6191234512345", "Couscous 1kg", 6.0, "Alimentation", 120, 30, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Confiture de figue", "6191234523456", "Confiture artisanale", 12.0, "Alimentation", 50, 10, "Rayon frais", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+
+// Artisanat
+            insertProduct("Poterie de Nabeul", "6193456789012", "Pot décoratif", 45.0, "Artisanat", 30, 5, "Rayon artisanal", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Tapis berbère", "6193456712345", "Tapis laine 2x3m", 320.0, "Artisanat", 15, 3, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Plateau en cuivre", "6193456723456", "Plateau gravé", 75.0, "Artisanat", 25, 5, "Rayon artisanal", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Vase en céramique", "6193456734567", "Vase décoratif", 55.0, "Artisanat", 20, 4, "Rayon décoration", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+
+// Cosmétique
+            insertProduct("Savon d'Alep", "6194567890123", "Savon naturel", 12.5, "Cosmétique", 80, 15, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Huile d'argan", "6194567812345", "Huile cosmétique", 42.0, "Cosmétique", 35, 7, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Gommage au rhassoul", "6194567823456", "Masque argileux", 18.0, "Cosmétique", 45, 9, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+
+// Boissons
+            insertProduct("Thé à la menthe", "6195678912345", "Thé vert 250g", 15.0, "Boissons", 60, 12, "Rayon boissons", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Jus de grenade", "6195678923456", "Jus 100% naturel", 8.0, "Boissons", 90, 18, "Rayon frais", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Café moulu", "6195678934567", "Café tunisien", 22.0, "Boissons", 40, 8, "Rayon boissons", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+
+// Textile
+            insertProduct("Chéchia rouge", "6196789123456", "Chéchia traditionnelle", 35.0, "Textile", 25, 5, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Jebba homme", "6196789234567", "Tenue traditionnelle", 120.0, "Textile", 15, 3, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+
+// Epicerie
+            insertProduct("Pâtes d'amande", "6197891234567", "Pâtes artisanales", 28.0, "Epicerie", 30, 6, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Fruits secs", "6197892345678", "Mélange premium", 32.0, "Epicerie", 45, 9, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+
+            // 6. Insertion des livreurs
             Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", true);
             Livreur livreur2 = insertLivreurIfNotExist(livreurRepository, "Fatma Gharbi", true);
 
@@ -109,29 +131,50 @@ public class DataInitializer {
 
             System.out.println("✅ Initialisation complète réussie.");
         };
+
     }
+
     private void insertRoleIfNotExist(RoleRepository repo, String name, String description) {
-        if (repo.findByName(name).isEmpty()) {
+        repo.findByName(name).ifPresentOrElse(role -> {
+            // Si le rôle existe, ne rien faire
+            System.out.println("Le rôle " + name + " existe déjà.");
+        }, () -> {
+            // Si le rôle n'existe pas, l'insérer
             repo.save(new Role(name, description));
-        }
+            System.out.println("Rôle " + name + " inséré avec succès.");
+        });
     }
 
     private void insertUserIfNotExist(UserRepository repo, String username, String email, String pwd, String roleName,
                                       RoleRepository roleRepo, PasswordEncoder encoder) {
-        if (repo.findByEmail(email).isEmpty()) {
-            Role role = roleRepo.findByName(roleName).orElseThrow();
+        repo.findByEmail(email).ifPresentOrElse(user -> {
+            // Si l'utilisateur existe, ne rien faire
+            System.out.println("L'utilisateur avec l'email " + email + " existe déjà.");
+        }, () -> {
+            // Si l'utilisateur n'existe pas, l'insérer
+            Role role = roleRepo.findByName(roleName).orElseThrow(() -> new RuntimeException("Rôle non trouvé"));
             repo.save(new User(username, email, encoder.encode(pwd), role));
-        }
+            System.out.println("Utilisateur " + username + " inséré avec succès.");
+        });
     }
 
     private void insertCategoryIfNotExist(CategoryRepository repo, String name, String desc) {
-        if (repo.findByName(name).isEmpty()) {
+        repo.findByName(name).ifPresentOrElse(category -> {
+            // Si la catégorie existe, ne rien faire
+            System.out.println("La catégorie " + name + " existe déjà.");
+        }, () -> {
+            // Si la catégorie n'existe pas, l'insérer
             repo.save(new Category(name, desc));
-        }
+            System.out.println("Catégorie " + name + " insérée avec succès.");
+        });
     }
 
     private void insertShelfIfNotExist(ShelfRepository repo, String name, String type, int x, int y, int width, int height) {
-        if (repo.findByName(name).isEmpty()) {
+        repo.findByName(name).ifPresentOrElse(shelf -> {
+            // Si le rayon existe, ne rien faire
+            System.out.println("Le rayon " + name + " existe déjà.");
+        }, () -> {
+            // Si le rayon n'existe pas, l'insérer
             Shelf shelf = new Shelf();
             shelf.setName(name);
             shelf.setType(type);
@@ -140,7 +183,8 @@ public class DataInitializer {
             shelf.setWidth(width);
             shelf.setHeight(height);
             repo.save(shelf);
-        }
+            System.out.println("Rayon " + name + " inséré avec succès.");
+        });
     }
 
     private void insertProduct(String name, String barcode, String description, double price, String categoryName,
@@ -149,10 +193,16 @@ public class DataInitializer {
                                ProductRepository productRepo, StockRepository stockRepo,
                                ProductPositionRepository positionRepo) {
 
-        if (productRepo.findByBarcode(barcode).isEmpty()) {
-            Category category = categoryRepo.findByName(categoryName).orElseThrow();
-            Shelf shelf = shelfRepo.findByName(shelfName).orElseThrow();
+        // Vérification automatique si le produit existe déjà dans la base de données
+        productRepo.findByBarcode(barcode).ifPresentOrElse(product -> {
+            // Si le produit existe, ne rien faire
+            System.out.println("Le produit avec le barcode " + barcode + " existe déjà.");
+        }, () -> {
+            // Si le produit n'existe pas, l'insérer
+            Category category = categoryRepo.findByName(categoryName).orElseThrow(() -> new RuntimeException("Catégorie non trouvée"));
+            Shelf shelf = shelfRepo.findByName(shelfName).orElseThrow(() -> new RuntimeException("Rayon non trouvé"));
 
+            // Création et enregistrement du produit
             Product product = new Product();
             product.setName(name);
             product.setBarcode(barcode);
@@ -161,12 +211,14 @@ public class DataInitializer {
             product.setCategory(category);
             product = productRepo.save(product);
 
+            // Création et enregistrement du stock
             Stock stock = new Stock();
             stock.setProduct(product);
             stock.setQuantity(quantity);
             stock.setMinThreshold(minThreshold);
             stockRepo.save(stock);
 
+            // Création et enregistrement de la position du produit
             ProductPosition position = new ProductPosition();
             position.setProduct(product);
             position.setShelf(shelf);
@@ -176,9 +228,10 @@ public class DataInitializer {
             position.setHeight(1);
             position.setZIndex(0);
             positionRepo.save(position);
-        }
-    }
 
+            System.out.println("Produit " + name + " inséré avec succès.");
+        });
+    }
 
     private Livreur insertLivreurIfNotExist(LivreurRepository repo, String nom, boolean disponible) {
         Optional<Livreur> existing = repo.findAll().stream().filter(l -> l.getNom().equals(nom)).findFirst();
@@ -186,7 +239,9 @@ public class DataInitializer {
             Livreur livreur = new Livreur();
             livreur.setNom(nom);
             livreur.setDisponible(disponible);
-            return repo.save(livreur);
+            Livreur savedLivreur = repo.save(livreur);
+            System.out.println("Livreur " + nom + " inséré avec succès.");
+            return savedLivreur;
         });
     }
 
@@ -210,18 +265,36 @@ public class DataInitializer {
 
         order.setTotalAmount(item.getUnitPrice() * quantity);
 
-        Order savedOrder = orderRepo.save(order);
-        return savedOrder;
+        // Vérification si l'ordre existe déjà, sinon création
+        if (!orderRepo.existsByOrderNumber(orderNumber)) {
+            Order savedOrder = orderRepo.save(order);
+            System.out.println("Commande " + orderNumber + " créée avec succès.");
+            return savedOrder;
+        } else {
+            System.out.println("La commande avec le numéro " + orderNumber + " existe déjà.");
+            return null;
+        }
     }
 
     private void createDeliveryRequest(DeliveryRequestRepository deliveryRepo, Order order, Livreur livreur, DeliveryStatus status, double fees) {
-        DeliveryRequest request = new DeliveryRequest();
-        request.setOrder(order);
-        request.setLivreur(livreur);
-        request.setStatus(status);
-        request.setDeliveryFee(fees);
-        deliveryRepo.save(request);
+        if (order == null) {
+            System.out.println("La commande est null. Impossible de créer la demande de livraison.");
+            return; // Arrêter l'exécution si la commande est nulle
+        }
+
+        Optional<DeliveryRequest> existingRequest = deliveryRepo.findByOrder(order);
+        existingRequest.ifPresentOrElse(request -> {
+            System.out.println("La demande de livraison pour la commande " + order.getOrderNumber() + " existe déjà.");
+        }, () -> {
+            // Si la demande de livraison n'existe pas, la créer
+            DeliveryRequest request = new DeliveryRequest();
+            request.setOrder(order);  // Associer la commande à la demande
+            request.setLivreur(livreur);
+            request.setStatus(status);
+            request.setDeliveryFee(fees);
+            deliveryRepo.save(request);
+            System.out.println("Demande de livraison pour la commande " + order.getOrderNumber() + " créée avec succès.");
+        });
     }
 
 }
-

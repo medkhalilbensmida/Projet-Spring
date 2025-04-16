@@ -6,8 +6,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
+import tn.fst.spring.projet_spring.model.order.Order;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DeliveryRequestRepository extends JpaRepository<DeliveryRequest, Long> {
@@ -18,4 +20,6 @@ public interface DeliveryRequestRepository extends JpaRepository<DeliveryRequest
 
     // Optional: If you need the full list of delivered requests for a person
     List<DeliveryRequest> findByLivreurIdAndStatus(Long livreurId, DeliveryStatus status);
+
+    Optional<DeliveryRequest> findByOrder(Order order);
 } 
