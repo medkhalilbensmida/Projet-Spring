@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tn.fst.spring.projet_spring.dto.logistics.CreateLivreurRequest;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurRequest;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurAvailabilityRequest;
 import tn.fst.spring.projet_spring.model.logistics.Livreur;
 import tn.fst.spring.projet_spring.services.logistics.ILivreurService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -77,6 +78,21 @@ public class LivreurRestController {
         return ResponseEntity.ok(updatedLivreur);
     }
 
+    @Operation(summary = "Update livreur availability", description = "Updates the availability status of a specific livreur.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Availability updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input (e.g., null availability)"),
+            @ApiResponse(responseCode = "404", description = "Livreur not found")
+    })
+    @PatchMapping("/{id}/disponibilite")
+    public ResponseEntity<Livreur> updateLivreurAvailability(@PathVariable Long id, @Valid @RequestBody UpdateLivreurAvailabilityRequest availabilityRequest) {
+        Livreur updatedLivreur = livreurService.updateLivreurAvailability(id, availabilityRequest.getDisponible());
+        if (updatedLivreur == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updatedLivreur);
+    }
+
     @Operation(summary = "Delete a livreur", description = "Removes a livreur from the system by their ID.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Livreur deleted successfully"),
@@ -86,5 +102,22 @@ public class LivreurRestController {
     public ResponseEntity<Void> deleteLivreur(@PathVariable Long id) {
         livreurService.removeLivreur(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Calculate livreur prime (bonus)", description = "Calculates the prime (bonus) for a specific livreur based on their completed deliveries.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully calculated prime"),
+            @ApiResponse(responseCode = "404", description = "Livreur not found")
+    })
+    @GetMapping("/{id}/prime")
+    public ResponseEntity<Double> getLivreurPrime(@PathVariable Long id) {
+        try {
+            double prime = livreurService.calculatePrime(id);
+            return ResponseEntity.ok(prime);
+        } catch (RuntimeException e) {
+            // Assuming the service throws RuntimeException for not found livreur
+            // A more specific exception handling might be needed
+            return ResponseEntity.notFound().build();
+        }
     }
 } 
