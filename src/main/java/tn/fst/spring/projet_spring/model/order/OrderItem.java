@@ -1,10 +1,17 @@
 package tn.fst.spring.projet_spring.model.order;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import tn.fst.spring.projet_spring.model.catalog.Product;
 
-@Data
+
+@Getter
+@Setter
+@ToString(exclude = {"order", "product"})
+@EqualsAndHashCode(exclude = {"order", "product"})
 @Entity
 public class OrderItem {
     @Id

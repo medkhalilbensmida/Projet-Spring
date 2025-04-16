@@ -1,12 +1,20 @@
 package tn.fst.spring.projet_spring.model.catalog;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+
+@Getter
+@Setter
+//to avoid stack overflow error when using toString or equalsAndHashCode
+@ToString(exclude = {"products"})
+@EqualsAndHashCode(exclude = {"products"})
 @Entity
 public class Category {
     @Id
