@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tn.fst.spring.projet_spring.dto.logistics.CreateLivreurRequest;
 import tn.fst.spring.projet_spring.dto.logistics.DeliveryRequestDTO;
+import tn.fst.spring.projet_spring.dto.logistics.LivreurStatsDTO;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurAvailabilityRequest;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurRequest;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
@@ -144,5 +145,12 @@ public class LivreurRestController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(top);
+    }
+
+    @Operation(summary = "Get livreurs stats", description = "Percentage distribution of statuses and total delivered this month per livreur")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved stats")
+    @GetMapping("/stats")
+    public ResponseEntity<List<LivreurStatsDTO>> getLivreurStats() {
+        return ResponseEntity.ok(livreurService.getLivreurStats());
     }
 }

@@ -28,5 +28,5 @@ public interface DeliveryRequestRepository extends JpaRepository<DeliveryRequest
     List<DeliveryRequest> findByLivreurId(Long livreurId);
 
     // Find delivered deliveries within a date range (used for livreur of the month)
-    List<DeliveryRequest> findByStatusAndOrder_OrderDateBetween(DeliveryStatus status, LocalDateTime start, LocalDateTime end);
+    List<DeliveryRequest> findByStatusAndOrderOrderDateBetween(DeliveryStatus status, LocalDateTime start, LocalDateTime end);
 }
