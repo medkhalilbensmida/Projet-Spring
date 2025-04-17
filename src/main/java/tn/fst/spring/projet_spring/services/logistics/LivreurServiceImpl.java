@@ -9,6 +9,7 @@ import tn.fst.spring.projet_spring.repositories.logistics.LivreurRepository;
 import tn.fst.spring.projet_spring.repositories.logistics.DeliveryRequestRepository;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
+import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +46,7 @@ public class LivreurServiceImpl implements ILivreurService {
     public Livreur updateLivreur(Long id, UpdateLivreurRequest livreurRequest) {
         Optional<Livreur> optionalLivreur = livreurRepository.findById(id);
         if (optionalLivreur.isEmpty()) {
-            return null;
+            throw new ResourceNotFoundException("Livreur not found with id: " + id);
         }
 
         Livreur existingLivreur = optionalLivreur.get();
@@ -63,7 +64,7 @@ public class LivreurServiceImpl implements ILivreurService {
     @Override
     public Livreur retrieveLivreur(Long id) {
         return livreurRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Livreur not found with id: " + id)); // Consider a custom exception
+                .orElseThrow(() -> new ResourceNotFoundException("Livreur not found with id: " + id));
     }
 
     @Override
@@ -75,7 +76,7 @@ public class LivreurServiceImpl implements ILivreurService {
     public Livreur updateLivreurAvailability(Long id, boolean disponible) {
         Optional<Livreur> optionalLivreur = livreurRepository.findById(id);
         if (optionalLivreur.isEmpty()) {
-            return null; // Or throw exception
+            throw new ResourceNotFoundException("Livreur not found with id: " + id);
         }
         Livreur existingLivreur = optionalLivreur.get();
         existingLivreur.setDisponible(disponible);
@@ -85,7 +86,7 @@ public class LivreurServiceImpl implements ILivreurService {
     @Override
     public double calculatePrime(Long livreurId) {
         if (!livreurRepository.existsById(livreurId)) {
-            throw new RuntimeException("Livreur not found with id: " + livreurId);
+            throw new ResourceNotFoundException("Livreur not found with id: " + livreurId);
         }
 
         long deliveredCount = deliveryRequestRepository.countByLivreurIdAndStatus(livreurId, DeliveryStatus.DELIVERED);
@@ -99,6 +100,9 @@ public class LivreurServiceImpl implements ILivreurService {
 
     @Override
     public List<DeliveryRequest> getAssignedDeliveries(Long livreurId) {
+        if (!livreurRepository.existsById(livreurId)) {
+            throw new ResourceNotFoundException("Livreur not found with id: " + livreurId);
+        }
         return deliveryRequestRepository.findByLivreurId(livreurId);
     }
 
