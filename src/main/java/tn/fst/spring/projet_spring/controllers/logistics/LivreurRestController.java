@@ -5,8 +5,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import tn.fst.spring.projet_spring.dto.logistics.CreateLivreurRequest;
-import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurRequest;
+import tn.fst.spring.projet_spring.dto.logistics.DeliveryRequestDTO;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurAvailabilityRequest;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurRequest;
+import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
 import tn.fst.spring.projet_spring.model.logistics.Livreur;
 import tn.fst.spring.projet_spring.services.logistics.ILivreurService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +19,7 @@ import jakarta.validation.Valid;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @AllArgsConstructor
@@ -120,4 +123,26 @@ public class LivreurRestController {
             return ResponseEntity.notFound().build();
         }
     }
-} 
+
+    @Operation(summary = "Get assigned deliveries for a livreur", description = "Retrieves a list of deliveries assigned to a specific livreur.")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved assigned deliveries")
+    @GetMapping("/{id}/deliveries")
+    public ResponseEntity<List<DeliveryRequestDTO>> getAssignedDeliveries(@PathVariable Long id) {
+        List<DeliveryRequest> deliveries = livreurService.getAssignedDeliveries(id);
+        List<DeliveryRequestDTO> dtos = deliveries.stream()
+                .map(dr -> new DeliveryRequestDTO(dr.getId(), dr.getDeliveryFee(), dr.getStatus(), dr.getOrder().getId()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @Operation(summary = "Get livreur of the month", description = "Finds the livreur with the most delivered deliveries in the current month.")
+    @ApiResponse(responseCode = "200", description = "Successfully found livreur of the month")
+    @GetMapping("/of-month")
+    public ResponseEntity<Livreur> getLivreurOfMonth() {
+        Livreur top = livreurService.getLivreurOfMonth();
+        if (top == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(top);
+    }
+}

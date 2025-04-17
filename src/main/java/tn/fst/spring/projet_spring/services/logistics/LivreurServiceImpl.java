@@ -11,6 +11,10 @@ import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -90,5 +94,28 @@ public class LivreurServiceImpl implements ILivreurService {
         log.info("Calculated prime for livreur {}: {} deliveries * {} = {}", livreurId, deliveredCount, BONUS_FACTOR_PER_DELIVERY, prime);
 
         return prime;
+    }
+
+    @Override
+    public List<DeliveryRequest> getAssignedDeliveries(Long livreurId) {
+        return deliveryRequestRepository.findByLivreurId(livreurId);
+    }
+
+    @Override
+    public Livreur getLivreurOfMonth() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime end = start.plusMonths(1);
+        List<DeliveryRequest> delivered = deliveryRequestRepository.findByStatusAndOrder_OrderDateBetween(DeliveryStatus.DELIVERED, start, end);
+        if (delivered.isEmpty()) {
+            return null;
+        }
+        Map<Livreur, Long> counts = delivered.stream()
+            .map(DeliveryRequest::getLivreur)
+            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        return counts.entrySet().stream()
+            .max(Map.Entry.comparingByValue())
+            .get()
+            .getKey();
     }
 } 
