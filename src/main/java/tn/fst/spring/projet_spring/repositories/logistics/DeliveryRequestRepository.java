@@ -8,6 +8,7 @@ import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
 import tn.fst.spring.projet_spring.model.order.Order;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,4 +23,10 @@ public interface DeliveryRequestRepository extends JpaRepository<DeliveryRequest
     List<DeliveryRequest> findByLivreurIdAndStatus(Long livreurId, DeliveryStatus status);
 
     Optional<DeliveryRequest> findByOrder(Order order);
-} 
+
+    // Find all deliveries assigned to a livreur
+    List<DeliveryRequest> findByLivreurId(Long livreurId);
+
+    // Find delivered deliveries within a date range (used for livreur of the month)
+    List<DeliveryRequest> findByStatusAndOrderOrderDateBetween(DeliveryStatus status, LocalDateTime start, LocalDateTime end);
+}
