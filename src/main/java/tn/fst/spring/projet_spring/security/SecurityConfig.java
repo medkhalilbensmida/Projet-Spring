@@ -91,6 +91,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/payments").hasAnyRole("ADMIN", "CUSTOMER")
                         .requestMatchers(HttpMethod.DELETE, "/api/payments/**").hasRole("ADMIN")
 
+                        // Invoices endpoints - secure for customers vs admins
+                            .requestMatchers(HttpMethod.GET, "/api/invoices").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/invoices/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/invoices/generate/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/invoices").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/invoices/search").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/invoices/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/invoices/**").hasRole("ADMIN")
+
+
 
                         // Utilisateur connecté
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
