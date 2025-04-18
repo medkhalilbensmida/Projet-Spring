@@ -69,6 +69,9 @@ public class LivreurServiceImpl implements ILivreurService {
 
     @Override
     public void removeLivreur(Long id) {
+        if (!livreurRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Livreur not found with id: " + id);
+        }
         livreurRepository.deleteById(id);
     }
 
