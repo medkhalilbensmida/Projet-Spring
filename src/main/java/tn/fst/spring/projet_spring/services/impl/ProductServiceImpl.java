@@ -73,6 +73,7 @@ public class ProductServiceImpl implements IProductService {
         product.setDescription(productRequest.getDescription());
         product.setPrice(productRequest.getPrice());
         product.setCategory(category);
+        product.setWeight(productRequest.getWeight());
 
         Stock stock = new Stock();
         stock.setProduct(product);
@@ -104,6 +105,10 @@ public class ProductServiceImpl implements IProductService {
         product.setDescription(productRequest.getDescription());
         product.setPrice(productRequest.getPrice());
         product.setCategory(category);
+
+        if (productRequest.getWeight() != null) {
+            product.setWeight(productRequest.getWeight());
+        }
 
         if (product.getStock() != null) {
             product.getStock().setQuantity(productRequest.getStockQuantity());
@@ -145,6 +150,14 @@ public class ProductServiceImpl implements IProductService {
                 predicates.add(cb.equal(root.get("category").get("name"), searchRequest.getCategoryName()));
             }
 
+            if (searchRequest.getMinWeight() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("weight"), searchRequest.getMinWeight()));
+            }
+
+            if (searchRequest.getMaxWeight() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("weight"), searchRequest.getMaxWeight()));
+            }
+
             if (searchRequest.getMinPrice() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("price"), searchRequest.getMinPrice()));
             }
@@ -183,6 +196,7 @@ public class ProductServiceImpl implements IProductService {
                 .price(product.getPrice())
                 .category(product.getCategory().getName())
                 .stockQuantity(product.getStock().getQuantity())
+                .weight(product.getWeight())
                 .build();
     }
 

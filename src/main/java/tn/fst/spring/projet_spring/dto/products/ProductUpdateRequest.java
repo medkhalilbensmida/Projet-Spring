@@ -16,6 +16,10 @@ public class ProductUpdateRequest {
     @Positive
     private double price;
 
+    // Weight is optional on update, but must be valid if provided
+    @PositiveOrZero(message = "Product weight must be zero or positive")
+    private Double weight; // Add weight (optional on update)
+
     @NotBlank
     private String categoryName;
 

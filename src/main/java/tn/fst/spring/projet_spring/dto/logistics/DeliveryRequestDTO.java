@@ -11,4 +11,6 @@ public class DeliveryRequestDTO {
     private double deliveryFee;
     private DeliveryStatus status;
     private Long orderId;
+    private double destinationLat;
+    private double destinationLon;
 }
