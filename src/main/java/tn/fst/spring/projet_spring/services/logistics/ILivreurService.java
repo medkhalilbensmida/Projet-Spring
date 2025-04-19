@@ -31,4 +31,5 @@ public interface ILivreurService {
     List<DeliveryRequest> getAssignedDeliveries(Long livreurId);
     // Find the livreur of the month based on deliveries in current month
     Livreur getLivreurOfMonth();
+    Livreur updateLivreurCoordinates(Long id, Double latitude, Double longitude);
 } 
