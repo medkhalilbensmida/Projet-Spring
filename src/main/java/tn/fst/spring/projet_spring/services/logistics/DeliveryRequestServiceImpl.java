@@ -38,29 +38,60 @@ public class DeliveryRequestServiceImpl implements IDeliveryRequestService {
         Order order = orderRepository.findById(dto.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + dto.getOrderId()));
 
+        // Check if a delivery request already exists for this order
         if (deliveryRequestRepository.findByOrder(order).isPresent()) {
             throw new IllegalStateException("Delivery request already exists for order " + order.getOrderNumber());
         }
 
-        Livreur livreur = livreurRepository.findById(dto.getLivreurId())
-                .orElseThrow(() -> new ResourceNotFoundException("Livreur not found with id: " + dto.getLivreurId()));
+        Livreur assignedLivreur = null;
+        DeliveryStatus status;
 
+        // Check if a specific livreur is requested
+        if (dto.getLivreurId() != null) {
+            // Livreur ID is provided, attempt assignment
+            Livreur livreur = livreurRepository.findById(dto.getLivreurId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Livreur not found with id: " + dto.getLivreurId()));
+
+            // Check if the requested livreur is available
+            if (!livreur.isDisponible()) {
+                 // You might want to create a more specific exception like LivreurNotAvailableException
+                 throw new IllegalStateException("Livreur with id " + dto.getLivreurId() + " is not available.");
+            }
+
+            // Assign the livreur and mark them as unavailable
+            assignedLivreur = livreur;
+            assignedLivreur.setDisponible(false);
+            livreurRepository.save(assignedLivreur); // Persist the change in livreur availability
+            status = DeliveryStatus.ASSIGNED;
+            log.info("Assigned available livreur {} to new delivery request for order {}", assignedLivreur.getId(), order.getOrderNumber());
+
+        } else {
+            // No livreur ID provided, set status to PENDING for later assignment
+            status = DeliveryStatus.PENDING;
+            log.info("No livreur ID provided for order {}. Setting status to PENDING.", order.getOrderNumber());
+        }
+
+        // Calculate weight and delivery fee regardless of assignment status
         double totalWeight = order.getItems().stream()
                 .mapToDouble(item -> (item.getProduct() != null ? item.getProduct().getWeight() : 0.0) * item.getQuantity())
                 .sum();
 
         double fee = calculateDeliveryFee(dto.getDestinationLat(), dto.getDestinationLon(), totalWeight);
 
+        // Create and populate the new DeliveryRequest entity
         DeliveryRequest dr = new DeliveryRequest();
         dr.setOrder(order);
-        dr.setLivreur(livreur);
-        dr.setStatus(DeliveryStatus.ASSIGNED);
+        dr.setLivreur(assignedLivreur); // Will be null if status is PENDING
+        dr.setStatus(status);
         dr.setDeliveryFee(fee);
         dr.setDestinationLat(dto.getDestinationLat());
         dr.setDestinationLon(dto.getDestinationLon());
 
+        // Save the new delivery request
         DeliveryRequest saved = deliveryRequestRepository.save(dr);
+        log.info("Successfully created DeliveryRequest {} with status {} for order {}", saved.getId(), saved.getStatus(), order.getOrderNumber());
 
+        // Map the saved entity to a DTO for the response
         return new DeliveryRequestDTO(
                 saved.getId(),
                 saved.getDeliveryFee(),
