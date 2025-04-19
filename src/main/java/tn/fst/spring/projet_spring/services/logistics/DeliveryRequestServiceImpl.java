@@ -499,4 +499,56 @@ public class DeliveryRequestServiceImpl implements IDeliveryRequestService {
                 .map(this::mapToDTO) // Reuse existing mapping method
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional
+    public DeliveryRequestDTO assignLivreurManually(Long deliveryRequestId, Long livreurId) {
+        log.info("Attempting to manually assign Livreur {} to DeliveryRequest {}", livreurId, deliveryRequestId);
+
+        // 1. Fetch DeliveryRequest
+        DeliveryRequest deliveryRequest = deliveryRequestRepository.findById(deliveryRequestId)
+                .orElseThrow(() -> new ResourceNotFoundException("DeliveryRequest not found with ID: " + deliveryRequestId));
+
+        // 2. Fetch Livreur
+        Livreur livreur = livreurRepository.findById(livreurId)
+                .orElseThrow(() -> new ResourceNotFoundException("Livreur not found with ID: " + livreurId));
+
+        // 3. Check if DeliveryRequest already assigned
+        if (deliveryRequest.getLivreur() != null) {
+            throw new DeliveryAlreadyAssignedException(
+                String.format("DeliveryRequest %d is already assigned to Livreur %d.", 
+                              deliveryRequestId, deliveryRequest.getLivreur().getId())
+            );
+        }
+        
+        // Can only assign to PENDING requests typically
+        if (deliveryRequest.getStatus() != DeliveryStatus.PENDING) {
+            throw new IllegalStateException(
+                String.format("DeliveryRequest %d has status %s and cannot be manually assigned. Only PENDING requests are eligible.", 
+                              deliveryRequestId, deliveryRequest.getStatus())
+            );
+        }
+
+
+        // 4. Check if Livreur is available
+        if (!livreur.isDisponible()) {
+            throw new IllegalStateException("Livreur with ID " + livreurId + " is not available for assignment.");
+        }
+
+        // 5. Perform assignment
+        deliveryRequest.setLivreur(livreur);
+        deliveryRequest.setStatus(DeliveryStatus.ASSIGNED);
+        
+        // 6. Mark Livreur as unavailable
+        livreur.setDisponible(false);
+        
+        // 7. Save changes
+        livreurRepository.save(livreur);
+        DeliveryRequest savedRequest = deliveryRequestRepository.save(deliveryRequest);
+
+        log.info("Successfully assigned Livreur {} to DeliveryRequest {} and updated status to ASSIGNED.", livreurId, deliveryRequestId);
+
+        // 8. Return DTO
+        return mapToDTO(savedRequest);
+    }
 }
