@@ -9,7 +9,6 @@ import lombok.Data;
 public class CreateDeliveryRequestDTO {
     @NotNull
     private Long orderId;
-    @NotNull
     private Long livreurId;
     // Weight is now calculated from the order items
     // Origin coordinates are now fetched from config
