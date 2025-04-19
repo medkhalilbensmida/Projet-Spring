@@ -23,4 +23,14 @@ public interface IDeliveryRequestService {
 
     // New method to calculate fee based on an existing DeliveryRequest ID
     double calculateFeeForRequest(Long deliveryRequestId);
+    
+    /**
+     * Auto-assigns the closest available livreur to a delivery request.
+     * The assignment is based on the distance between the livreur and the delivery destination.
+     * 
+     * @param deliveryRequestId The ID of the delivery request to assign
+     * @return The updated DeliveryRequestDTO with the assigned livreur information
+     * @throws ResourceNotFoundException if the delivery request or no available livreurs are found
+     */
+    DeliveryRequestDTO autoAssignLivreur(Long deliveryRequestId);
 }

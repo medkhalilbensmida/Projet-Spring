@@ -9,6 +9,7 @@ import tn.fst.spring.projet_spring.dto.logistics.DeliveryRequestDTO;
 import tn.fst.spring.projet_spring.dto.logistics.LivreurStatsDTO;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurAvailabilityRequest;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurRequest;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateLivreurCoordinatesRequest;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
 import tn.fst.spring.projet_spring.model.logistics.Livreur;
 import tn.fst.spring.projet_spring.services.logistics.ILivreurService;
@@ -58,6 +59,10 @@ public class LivreurRestController {
         Livreur livreurToCreate = new Livreur();
         livreurToCreate.setNom(livreurRequest.getNom());
         livreurToCreate.setDisponible(livreurRequest.getDisponible());
+        livreurToCreate.setPhoneNumber(livreurRequest.getPhoneNumber());
+        livreurToCreate.setEmail(livreurRequest.getEmail());
+        livreurToCreate.setLatitude(livreurRequest.getLatitude());
+        livreurToCreate.setLongitude(livreurRequest.getLongitude());
 
         Livreur createdLivreur = livreurService.addLivreur(livreurToCreate);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -91,6 +96,25 @@ public class LivreurRestController {
     @PatchMapping("/{id}/disponibilite")
     public ResponseEntity<Livreur> updateLivreurAvailability(@PathVariable Long id, @Valid @RequestBody UpdateLivreurAvailabilityRequest availabilityRequest) {
         Livreur updatedLivreur = livreurService.updateLivreurAvailability(id, availabilityRequest.getDisponible());
+        if (updatedLivreur == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(updatedLivreur);
+    }
+
+    @Operation(summary = "Update livreur coordinates", description = "Updates the geographic coordinates (latitude, longitude) of a specific livreur.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Coordinates updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input (e.g., null coordinates)"),
+            @ApiResponse(responseCode = "404", description = "Livreur not found")
+    })
+    @PatchMapping("/{id}/coordinates")
+    public ResponseEntity<Livreur> updateLivreurCoordinates(@PathVariable Long id, @Valid @RequestBody UpdateLivreurCoordinatesRequest coordinatesRequest) {
+        Livreur updatedLivreur = livreurService.updateLivreurCoordinates(
+                id, 
+                coordinatesRequest.getLatitude(), 
+                coordinatesRequest.getLongitude()
+        );
         if (updatedLivreur == null) {
             return ResponseEntity.notFound().build();
         }
@@ -136,8 +160,9 @@ public class LivreurRestController {
                         dr.getDeliveryFee(),
                         dr.getStatus(),
                         dr.getOrder().getId(),
-                        dr.getDestinationLat(), // Add destination lat
-                        dr.getDestinationLon()  // Add destination lon
+                        dr.getLivreur() != null ? dr.getLivreur().getId() : null,
+                        dr.getDestinationLat(),
+                        dr.getDestinationLon()
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);

@@ -25,6 +25,11 @@ public class Livreur implements Serializable {
     private Long id;
 
     private String nom;
+    private String phoneNumber;
+    private String email;
+
+    private Double latitude;
+    private Double longitude;
 
     private boolean disponible;
 

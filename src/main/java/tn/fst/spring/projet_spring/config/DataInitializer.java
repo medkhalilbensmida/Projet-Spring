@@ -15,6 +15,7 @@ import tn.fst.spring.projet_spring.repositories.logistics.*;
 
 import java.util.*;
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadLocalRandom; // Import for random coordinates
 
 @Configuration
 public class DataInitializer {
@@ -43,7 +44,7 @@ public class DataInitializer {
             insertRoleIfNotExist(roleRepository, "ROLE_DELIVERY_MANAGER", "Responsable de livraison");
             insertRoleIfNotExist(roleRepository, "ROLE_EVENT_MANAGER", "Responsable caritatif");
 
-            insertUserIfNotExist(userRepository, "Ahmed Mhadhbi", "ahmed.mhadhbi@consummi.tn", "    ", "ROLE_ADMIN", roleRepository, passwordEncoder);
+            insertUserIfNotExist(userRepository, "Ahmed Mhadhbi", "ahmed.mhadhbi@consummi.tn", "admin123", "ROLE_ADMIN", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Yasmine Ben Slimane", "yasmine.benslimane@mail.com", "customer123", "ROLE_CUSTOMER", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Fadi Abaidi", "fadi.abaidi@mail.com", "customer123", "ROLE_CUSTOMER", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Mohamed Hedi Aissi", "hedi.aissi@mail.com", "customer123", "ROLE_CUSTOMER", roleRepository, passwordEncoder);
@@ -55,7 +56,7 @@ public class DataInitializer {
             insertUserIfNotExist(userRepository, "Latifa Khemiri", "latifa.delivery@consummi.tn", "delivery123", "ROLE_DELIVERY_MANAGER", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Nadia Ferjani", "nadia.event@consummi.tn", "event123", "ROLE_EVENT_MANAGER", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Rami Gharbi", "rami.event@consummi.tn", "event123", "ROLE_EVENT_MANAGER", roleRepository, passwordEncoder);
-
+            insertUserIfNotExist(userRepository, "Ahmed edf", "test", "test", "ROLE_ADMIN", roleRepository, passwordEncoder);
             insertCategoryIfNotExist(categoryRepository, "Alimentation", "Produits alimentaires tunisiens");
             insertCategoryIfNotExist(categoryRepository, "Artisanat", "Produits artisanaux tunisiens");
             insertCategoryIfNotExist(categoryRepository, "Cosmétique", "Produits cosmétiques naturels tunisiens");
@@ -107,27 +108,36 @@ public class DataInitializer {
             insertProduct("Pâtes d'amande", "6197891234567", "Pâtes artisanales", 28.0, 0.4, "Epicerie", 30, 6, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
             insertProduct("Fruits secs", "6197892345678", "Mélange premium", 32.0, 0.5, "Epicerie", 45, 9, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
 
-            // 6. Insertion des livreurs
-            Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", true);
-            Livreur livreur2 = insertLivreurIfNotExist(livreurRepository, "Fatma Gharbi", true);
+            // 6. Insertion des livreurs avec coordonnées
+            Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", false, 36.83 + ThreadLocalRandom.current().nextDouble(0.01, 0.02), 10.15 + ThreadLocalRandom.current().nextDouble(0.01, 0.02));
+            Livreur livreur2 = insertLivreurIfNotExist(livreurRepository, "Fatma Gharbi", false, 36.84 + ThreadLocalRandom.current().nextDouble(0.005, 0.015), 10.16 + ThreadLocalRandom.current().nextDouble(0.005, 0.015));
+            insertLivreurIfNotExist(livreurRepository, "Samir Khelifi", true, 36.83 + ThreadLocalRandom.current().nextDouble(0.005, 0.01), 10.17 + ThreadLocalRandom.current().nextDouble(0.005, 0.01));
+            insertLivreurIfNotExist(livreurRepository, "Hela Maatoug", true, 36.833833, 10.148004);
+            insertLivreurIfNotExist(livreurRepository, "Karim Jouini", true, 36.835556, 10.142389);
 
-            User customer = userRepository.findByEmail("fadi.abaidi@mail.com").orElseThrow();
+            User customerFadi = userRepository.findByEmail("fadi.abaidi@mail.com").orElseThrow();
+            User customerYasmine = userRepository.findByEmail("yasmine.benslimane@mail.com").orElseThrow();
             Product huileOlive = productRepository.findByBarcode("6191234567890").orElseThrow();
+            Product dattes = productRepository.findByBarcode("6192345678901").orElseThrow();
 
-            Order order1 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 2, "ORD001");
+            // 7. Create Orders and Assigned Delivery Requests
+            Order order1 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 2, "ORD001");
             createDeliveryRequest(deliveryRequestRepository, order1, livreur1, DeliveryStatus.DELIVERED, 5.0, 36.8008, 10.1815); // Tunis Centre
 
-            Order order2 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 1, "ORD002");
+            Order order2 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 1, "ORD002");
             createDeliveryRequest(deliveryRequestRepository, order2, livreur1, DeliveryStatus.DELIVERED, 5.0, 36.8454, 10.1941); // La Marsa
 
-            Order order3 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 3, "ORD003");
+            Order order3 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 3, "ORD003");
             createDeliveryRequest(deliveryRequestRepository, order3, livreur2, DeliveryStatus.IN_TRANSIT, 6.0, 36.7948, 10.1007); // Manouba
 
-            Order order4 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 1, "ORD004");
+            Order order4 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 1, "ORD004");
             createDeliveryRequest(deliveryRequestRepository, order4, livreur1, DeliveryStatus.ASSIGNED, 5.0, 36.8665, 10.1647); // Ariana
 
-            Order order5 = createOrder(orderRepository, orderItemRepository, customer, huileOlive, 2, "ORD005");
+            Order order5 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 2, "ORD005");
             createDeliveryRequest(deliveryRequestRepository, order5, livreur2, DeliveryStatus.DELIVERED, 6.0, 36.8028, 10.1797); // Lac 1
+
+            Order order6 = createOrder(orderRepository, orderItemRepository, customerYasmine, dattes, 5, "ORD006");
+            createUnassignedDeliveryRequest(deliveryRequestRepository, order6, 7.5, 36.8550, 10.1850);
 
             System.out.println("✅ Initialisation complète réussie.");
         };
@@ -235,14 +245,16 @@ public class DataInitializer {
         });
     }
 
-    private Livreur insertLivreurIfNotExist(LivreurRepository repo, String nom, boolean disponible) {
+    private Livreur insertLivreurIfNotExist(LivreurRepository repo, String nom, boolean disponible, Double latitude, Double longitude) {
         Optional<Livreur> existing = repo.findAll().stream().filter(l -> l.getNom().equals(nom)).findFirst();
         return existing.orElseGet(() -> {
             Livreur livreur = new Livreur();
             livreur.setNom(nom);
             livreur.setDisponible(disponible);
+            livreur.setLatitude(latitude);
+            livreur.setLongitude(longitude);
             Livreur savedLivreur = repo.save(livreur);
-            System.out.println("Livreur " + nom + " inséré avec succès.");
+            System.out.printf("Livreur %s inséré avec succès (Lat: %.5f, Lon: %.5f).%n", nom, latitude, longitude);
             return savedLivreur;
         });
     }
@@ -274,7 +286,7 @@ public class DataInitializer {
             return savedOrder;
         } else {
             System.out.println("La commande avec le numéro " + orderNumber + " existe déjà.");
-            return null;
+            return orderRepo.findByOrderNumber(orderNumber).orElse(null);
         }
     }
 
@@ -300,6 +312,30 @@ public class DataInitializer {
             request.setDestinationLon(destinationLon);
             deliveryRepo.save(request);
             System.out.println("Demande de livraison pour la commande " + order.getOrderNumber() + " créée avec succès.");
+        });
+    }
+
+    private void createUnassignedDeliveryRequest(DeliveryRequestRepository deliveryRepo, Order order,
+                                               double fees,
+                                               double destinationLat, double destinationLon) {
+        if (order == null) {
+            System.out.println("La commande est null. Impossible de créer la demande de livraison UNASSIGNED.");
+            return; 
+        }
+
+        Optional<DeliveryRequest> existingRequest = deliveryRepo.findByOrder(order);
+        existingRequest.ifPresentOrElse(request -> {
+            System.out.println("La demande de livraison (UNASSIGNED) pour la commande " + order.getOrderNumber() + " existe déjà.");
+        }, () -> {
+            DeliveryRequest request = new DeliveryRequest();
+            request.setOrder(order);
+            request.setLivreur(null); // No livreur assigned initially
+            request.setStatus(DeliveryStatus.PENDING); // Set initial status (e.g., PENDING)
+            request.setDeliveryFee(fees);
+            request.setDestinationLat(destinationLat);
+            request.setDestinationLon(destinationLon);
+            deliveryRepo.save(request);
+            System.out.println("Demande de livraison UNASSIGNED pour la commande " + order.getOrderNumber() + " créée avec succès.");
         });
     }
 

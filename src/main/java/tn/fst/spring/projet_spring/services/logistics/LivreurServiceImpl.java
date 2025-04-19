@@ -51,8 +51,21 @@ public class LivreurServiceImpl implements ILivreurService {
 
         Livreur existingLivreur = optionalLivreur.get();
 
+        // Check and update each field only if provided in the request
         if (livreurRequest.getNom() != null) {
             existingLivreur.setNom(livreurRequest.getNom());
+        }
+        if (livreurRequest.getPhoneNumber() != null) {
+            existingLivreur.setPhoneNumber(livreurRequest.getPhoneNumber());
+        }
+        if (livreurRequest.getEmail() != null) {
+            existingLivreur.setEmail(livreurRequest.getEmail());
+        }
+        if (livreurRequest.getLatitude() != null) {
+            existingLivreur.setLatitude(livreurRequest.getLatitude());
+        }
+        if (livreurRequest.getLongitude() != null) {
+            existingLivreur.setLongitude(livreurRequest.getLongitude());
         }
         if (livreurRequest.getDisponible() != null) {
             existingLivreur.setDisponible(livreurRequest.getDisponible());
@@ -83,6 +96,19 @@ public class LivreurServiceImpl implements ILivreurService {
         }
         Livreur existingLivreur = optionalLivreur.get();
         existingLivreur.setDisponible(disponible);
+        return livreurRepository.save(existingLivreur);
+    }
+
+    @Override
+    public Livreur updateLivreurCoordinates(Long id, Double latitude, Double longitude) {
+        Optional<Livreur> optionalLivreur = livreurRepository.findById(id);
+        if (optionalLivreur.isEmpty()) {
+            throw new ResourceNotFoundException("Livreur not found with id: " + id);
+        }
+        Livreur existingLivreur = optionalLivreur.get();
+        existingLivreur.setLatitude(latitude);
+        existingLivreur.setLongitude(longitude);
+        log.info("Updating coordinates for livreur {} to lat={}, lon={}", id, latitude, longitude);
         return livreurRepository.save(existingLivreur);
     }
 
