@@ -62,4 +62,6 @@ public interface IDeliveryRequestService {
      * @return A list of DeliveryRequestDTO matching the criteria.
      */
     List<DeliveryRequestDTO> getAllDeliveryRequests(DeliveryStatus status, Long livreurId, Long orderId);
+
+    DeliveryRequestDTO assignLivreurManually(Long deliveryRequestId, Long livreurId);
 }

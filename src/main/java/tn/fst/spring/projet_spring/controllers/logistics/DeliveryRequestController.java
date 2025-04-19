@@ -224,4 +224,33 @@ public class DeliveryRequestController {
                 .body(Map.of("error", (Object)("An unexpected error occurred while deleting the delivery request: " + e.getMessage())));
         }
     }
+
+    // Endpoint to manually assign a livreur to a delivery request
+    @Operation(summary = "Manually assign a livreur to a delivery request",
+               description = "Assigns a specific, available livreur to a PENDING delivery request.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Livreur successfully assigned"),
+        @ApiResponse(responseCode = "404", description = "Delivery request or Livreur not found"),
+        @ApiResponse(responseCode = "409", description = "Conflict - Delivery request already assigned, not in PENDING state, or Livreur is not available"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @PostMapping("/{deliveryRequestId}/assign/{livreurId}")
+    public ResponseEntity<?> assignLivreurManually(
+            @PathVariable Long deliveryRequestId,
+            @PathVariable Long livreurId) {
+        try {
+            DeliveryRequestDTO updatedDto = deliveryRequestService.assignLivreurManually(deliveryRequestId, livreurId);
+            return ResponseEntity.ok(updatedDto);
+        } catch (ResourceNotFoundException e) {
+            log.warn("Manual assignment failed for DR {}: {}", deliveryRequestId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        } catch (DeliveryAlreadyAssignedException | IllegalStateException e) { // Catch both assignment/state conflicts
+             log.warn("Manual assignment conflict for DR {}: {}", deliveryRequestId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Unexpected error during manual assignment for DR {} and Livreur {}", deliveryRequestId, livreurId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "An unexpected error occurred during manual assignment."));
+        }
+    }
 }
