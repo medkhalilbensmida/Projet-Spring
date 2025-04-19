@@ -2,6 +2,11 @@ package tn.fst.spring.projet_spring.services.logistics;
 
 import tn.fst.spring.projet_spring.dto.logistics.CreateDeliveryRequestDTO;
 import tn.fst.spring.projet_spring.dto.logistics.DeliveryRequestDTO;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryDestinationDTO;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryStatusDTO;
+import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
+
+import java.util.List;
 
 public interface IDeliveryRequestService {
     /**
@@ -33,4 +38,28 @@ public interface IDeliveryRequestService {
      * @throws ResourceNotFoundException if the delivery request or no available livreurs are found
      */
     DeliveryRequestDTO autoAssignLivreur(Long deliveryRequestId);
+
+    DeliveryRequestDTO updateDestinationAndRecalculateFee(Long deliveryRequestId, UpdateDeliveryDestinationDTO dto);
+
+    DeliveryRequestDTO updateDeliveryStatus(Long deliveryRequestId, UpdateDeliveryStatusDTO dto);
+
+    /**
+     * Deletes a delivery request if its status is ASSIGNED or IN_TRANSIT.
+     * If a livreur was assigned, their availability is updated if they have no other active deliveries.
+     *
+     * @param deliveryRequestId The ID of the delivery request to delete.
+     * @throws ResourceNotFoundException if the delivery request is not found.
+     * @throws IllegalStateException if the delivery request status is not ASSIGNED or IN_TRANSIT.
+     */
+    void deleteDeliveryRequest(Long deliveryRequestId);
+
+    /**
+     * Retrieves a list of delivery requests, optionally filtered by status, livreur ID, or order ID.
+     *
+     * @param status Optional filter by delivery status.
+     * @param livreurId Optional filter by assigned livreur ID.
+     * @param orderId Optional filter by associated order ID.
+     * @return A list of DeliveryRequestDTO matching the criteria.
+     */
+    List<DeliveryRequestDTO> getAllDeliveryRequests(DeliveryStatus status, Long livreurId, Long orderId);
 }

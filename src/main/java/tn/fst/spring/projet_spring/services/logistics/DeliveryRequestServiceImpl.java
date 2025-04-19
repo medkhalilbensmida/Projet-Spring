@@ -2,11 +2,14 @@ package tn.fst.spring.projet_spring.services.logistics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.fst.spring.projet_spring.config.ShippingProperties;
 import tn.fst.spring.projet_spring.dto.logistics.CreateDeliveryRequestDTO;
 import tn.fst.spring.projet_spring.dto.logistics.DeliveryRequestDTO;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryDestinationDTO;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryStatusDTO;
 import tn.fst.spring.projet_spring.exception.DeliveryAlreadyAssignedException;
 import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
@@ -17,9 +20,13 @@ import tn.fst.spring.projet_spring.repositories.logistics.DeliveryRequestReposit
 import tn.fst.spring.projet_spring.repositories.logistics.LivreurRepository;
 import tn.fst.spring.projet_spring.repositories.order.OrderRepository;
 
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -231,6 +238,145 @@ public class DeliveryRequestServiceImpl implements IDeliveryRequestService {
         return mapToDTO(saved);
     }
 
+    @Override
+    @Transactional
+    public DeliveryRequestDTO updateDestinationAndRecalculateFee(Long deliveryRequestId, UpdateDeliveryDestinationDTO dto) {
+        // 1. Fetch the DeliveryRequest
+        DeliveryRequest deliveryRequest = deliveryRequestRepository.findById(deliveryRequestId)
+                .orElseThrow(() -> new ResourceNotFoundException("DeliveryRequest not found with ID: " + deliveryRequestId));
+
+        // You might want to add a check here to prevent updating if the delivery is already in progress or completed
+        // e.g., if (!deliveryRequest.getStatus().equals(DeliveryStatus.PENDING) && !deliveryRequest.getStatus().equals(DeliveryStatus.ASSIGNED)) {
+        //     throw new IllegalStateException("Cannot update destination for a delivery that is already " + deliveryRequest.getStatus());
+        // }
+
+        // 2. Update destination coordinates
+        deliveryRequest.setDestinationLat(dto.getDestinationLat());
+        deliveryRequest.setDestinationLon(dto.getDestinationLon());
+
+        // 3. Recalculate the fee
+        // Get the associated Order to calculate weight
+        Order order = deliveryRequest.getOrder();
+        if (order == null) {
+            // This shouldn't happen based on current logic, but good practice to check
+            throw new IllegalStateException("Order associated with DeliveryRequest ID " + deliveryRequestId + " is null");
+        }
+        double totalWeightKg = order.getItems().stream()
+                .mapToDouble(item -> (item.getProduct() != null ? item.getProduct().getWeight() : 0.0) * item.getQuantity())
+                .sum();
+
+        // Use the core calculation logic
+        double newFee = calculateFee(dto.getDestinationLat(), dto.getDestinationLon(), totalWeightKg, shippingProperties);
+        deliveryRequest.setDeliveryFee(newFee);
+
+        // 4. Save the updated DeliveryRequest
+        DeliveryRequest updatedRequest = deliveryRequestRepository.save(deliveryRequest);
+        log.info("Updated destination for DeliveryRequest {} to [{}, {}] and recalculated fee to {}", 
+                 updatedRequest.getId(), dto.getDestinationLat(), dto.getDestinationLon(), newFee);
+
+        // 5. Map and return DTO
+        return mapToDTO(updatedRequest);
+    }
+
+    @Override
+    @Transactional
+    public DeliveryRequestDTO updateDeliveryStatus(Long deliveryRequestId, UpdateDeliveryStatusDTO dto) {
+        DeliveryRequest deliveryRequest = deliveryRequestRepository.findById(deliveryRequestId)
+                .orElseThrow(() -> new ResourceNotFoundException("DeliveryRequest not found with ID: " + deliveryRequestId));
+
+        DeliveryStatus currentStatus = deliveryRequest.getStatus();
+        DeliveryStatus newStatus = dto.getNewStatus();
+
+        if (currentStatus == newStatus) {
+            log.info("DeliveryRequest {} already has status {}. No change needed.", deliveryRequestId, newStatus);
+            return mapToDTO(deliveryRequest); // No change, return current state
+        }
+
+        // Rule: DO NOT ALLOW any change from SUCCESSFUL
+        if (currentStatus == DeliveryStatus.DELIVERED) {
+            throw new IllegalStateException("Cannot change status of a successfully completed delivery request (ID: " + deliveryRequestId + ")");
+        }
+
+        // Rule: PENDING can only transition to ASSIGNED
+        if (currentStatus == DeliveryStatus.PENDING) {
+            throw new IllegalStateException("A PENDING delivery request (ID: " + deliveryRequestId + ") cannot be changed (need to be assigned a livreur).");
+        }
+
+        // Rule: Handle specific transitions affecting Livreur
+        Livreur livreur = deliveryRequest.getLivreur();
+        boolean livreurNeedsUpdate = false;
+
+        // Case 1: New status is PENDING (coming from ASSIGNED, IN_TRANSIT, or FAILED)
+        if (newStatus == DeliveryStatus.PENDING && 
+            (currentStatus == DeliveryStatus.ASSIGNED || currentStatus == DeliveryStatus.IN_TRANSIT || currentStatus == DeliveryStatus.FAILED)) {
+            
+            if (livreur != null) {
+                log.info("DeliveryRequest {} status changing to PENDING from {}. Detaching Livreur {}.", deliveryRequestId, currentStatus, livreur.getId());
+                deliveryRequest.setLivreur(null); // Remove livreur association
+
+                // Check if livreur has other active deliveries
+                if (hasNoOtherActiveDeliveries(livreur, deliveryRequestId)) {
+                    log.info("Livreur {} has no other active deliveries. Setting available to true.", livreur.getId());
+                    livreur.setDisponible(true);
+                    livreurNeedsUpdate = true;
+                }
+            } else {
+                 log.warn("DeliveryRequest {} status changing to PENDING from {}, but no livreur was assigned.", deliveryRequestId, currentStatus);
+            }
+        }
+        // Case 2: New status is SUCCESSFUL or FAILED (coming from ASSIGNED or IN_TRANSIT)
+        else if ((newStatus == DeliveryStatus.DELIVERED || newStatus == DeliveryStatus.FAILED) && 
+                 (currentStatus == DeliveryStatus.ASSIGNED || currentStatus == DeliveryStatus.IN_TRANSIT)) {
+
+            if (livreur != null) {
+                 log.info("DeliveryRequest {} status changing to {} from {}. Checking Livreur {} availability.", deliveryRequestId, newStatus, currentStatus, livreur.getId());
+                 // Keep livreur association, but check if they can become available
+                 if (hasNoOtherActiveDeliveries(livreur, deliveryRequestId)) {
+                     log.info("Livreur {} has no other active deliveries (excluding this one). Setting available to true.", livreur.getId());
+                     livreur.setDisponible(true);
+                     livreurNeedsUpdate = true;
+                 }
+            } else {
+                 // This case might be less common, but log it
+                 log.warn("DeliveryRequest {} status changing to {} from {}, but no livreur was assigned.", deliveryRequestId, newStatus, currentStatus);
+            }
+        }
+        // Case 3: ASSIGNED -> IN_TRANSIT (No livreur changes needed)
+        else if (newStatus == DeliveryStatus.IN_TRANSIT && currentStatus == DeliveryStatus.ASSIGNED) {
+             log.info("DeliveryRequest {} status changing from ASSIGNED to IN_TRANSIT.", deliveryRequestId);
+             // No specific livreur availability logic needed here
+        }
+        // --- Add checks for other potentially invalid transitions if needed --- 
+        // e.g., PENDING -> IN_TRANSIT is invalid without assignment
+        // e.g., FAILED -> ASSIGNED/IN_TRANSIT requires assigning a livreur, not handled here.
+
+        // Update the status on the delivery request
+        deliveryRequest.setStatus(newStatus);
+        DeliveryRequest savedRequest = deliveryRequestRepository.save(deliveryRequest);
+
+        // Save livreur if their availability changed
+        if (livreurNeedsUpdate && livreur != null) {
+            livreurRepository.save(livreur);
+             log.info("Saved updated availability for Livreur {}.", livreur.getId());
+        }
+
+        log.info("Successfully updated status for DeliveryRequest {} from {} to {}", deliveryRequestId, currentStatus, newStatus);
+        return mapToDTO(savedRequest);
+    }
+
+    /**
+     * Checks if a livreur has any other delivery requests currently in ASSIGNED or IN_TRANSIT status,
+     * excluding the specified delivery request ID.
+     */
+    private boolean hasNoOtherActiveDeliveries(Livreur livreur, Long currentDeliveryRequestId) {
+        long activeDeliveriesCount = deliveryRequestRepository.countByLivreurAndStatusInAndIdNot(
+                livreur, 
+                Arrays.asList(DeliveryStatus.ASSIGNED, DeliveryStatus.IN_TRANSIT),
+                currentDeliveryRequestId
+        );
+        return activeDeliveriesCount == 0;
+    }
+
     private DeliveryRequestDTO mapToDTO(DeliveryRequest deliveryRequest) {
         Long livreurId = (deliveryRequest.getLivreur() != null) ? deliveryRequest.getLivreur().getId() : null;
         return new DeliveryRequestDTO(
@@ -270,5 +416,87 @@ public class DeliveryRequestServiceImpl implements IDeliveryRequestService {
                 Math.pow(Math.sin(dLon / 2), 2) * Math.cos(lat1) * Math.cos(lat2);
         double c = 2 * Math.asin(Math.sqrt(a));
         return EARTH_RADIUS * c;
+    }
+
+    @Override
+    @Transactional
+    public void deleteDeliveryRequest(Long deliveryRequestId) {
+        log.info("Attempting to delete delivery request with ID: {}", deliveryRequestId);
+        // 1. Fetch the DeliveryRequest
+        DeliveryRequest deliveryRequest = deliveryRequestRepository.findById(deliveryRequestId)
+                .orElseThrow(() -> new ResourceNotFoundException("DeliveryRequest not found with ID: " + deliveryRequestId));
+
+        // 2. Check the status
+        DeliveryStatus currentStatus = deliveryRequest.getStatus();
+        if (!(currentStatus != DeliveryStatus.IN_TRANSIT && currentStatus != DeliveryStatus.DELIVERED && currentStatus != DeliveryStatus.FAILED)) {
+            String errorMessage = String.format(
+                "Cannot delete DeliveryRequest %d because its status is %s. Deletion is not allowed for IN_TRANSIT, DELIVERED or FAILED statuses.",
+                deliveryRequestId,
+                currentStatus
+            );
+             log.warn(errorMessage);
+            throw new IllegalStateException(errorMessage);
+        }
+
+        // 3. Handle Livreur availability
+        Livreur livreur = deliveryRequest.getLivreur();
+        if (livreur != null) {
+            log.info("Delivery request {} has assigned Livreur {}. Checking for other active deliveries.", deliveryRequestId, livreur.getId());
+            if (hasNoOtherActiveDeliveries(livreur, deliveryRequestId)) {
+                log.info("Livreur {} has no other active deliveries. Setting disponible to true.", livreur.getId());
+                livreur.setDisponible(true);
+                livreurRepository.save(livreur); // Save the updated livreur status
+            } else {
+                 log.info("Livreur {} still has other active deliveries. Availability remains false.", livreur.getId());
+            }
+        } else {
+            // This case *shouldn't* happen if status is ASSIGNED/IN_TRANSIT, but log it defensively.
+             log.warn("Delivery request {} has status {} but no assigned livreur. Proceeding with deletion.", deliveryRequestId, currentStatus);
+        }
+
+        // 4. Delete the DeliveryRequest
+        deliveryRequestRepository.delete(deliveryRequest);
+        log.info("Called repository.delete() for DeliveryRequest ID: {}", deliveryRequestId);
+
+        // Re-check if livreur was updated and log final state before method return
+        if (livreur != null && livreur.isDisponible()) {
+           log.info("Livreur {} availability was updated to true within the transaction.", livreur.getId());
+        }
+
+        log.info("Successfully completed deleteDeliveryRequest method for ID: {}", deliveryRequestId);
+    }
+
+    @Override
+    public List<DeliveryRequestDTO> getAllDeliveryRequests(DeliveryStatus status, Long livreurId, Long orderId) {
+        log.info("Fetching delivery requests with filters - Status: {}, LivreurID: {}, OrderID: {}", 
+                 status, livreurId, orderId);
+
+        // Build dynamic query using Specifications
+        Specification<DeliveryRequest> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+            if (livreurId != null) {
+                // Join with Livreur entity to filter by its ID
+                predicates.add(criteriaBuilder.equal(root.get("livreur").get("id"), livreurId));
+            }
+            if (orderId != null) {
+                // Join with Order entity to filter by its ID
+                predicates.add(criteriaBuilder.equal(root.get("order").get("id"), orderId));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        List<DeliveryRequest> deliveryRequests = deliveryRequestRepository.findAll(spec);
+
+        log.info("Found {} delivery requests matching criteria.", deliveryRequests.size());
+
+        // Map entities to DTOs
+        return deliveryRequests.stream()
+                .map(this::mapToDTO) // Reuse existing mapping method
+                .collect(Collectors.toList());
     }
 }

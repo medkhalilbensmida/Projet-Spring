@@ -15,17 +15,54 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import tn.fst.spring.projet_spring.exception.DeliveryAlreadyAssignedException;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryDestinationDTO;
+import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryStatusDTO;
+import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/deliveryRequests")
 @RequiredArgsConstructor
 @Tag(name = "Delivery Request Management", description = "APIs for managing delivery requests")
+@Slf4j
 public class DeliveryRequestController {
 
     private final IDeliveryRequestService deliveryRequestService;
+
+    @Operation(summary = "Retrieve all delivery requests", 
+               description = "Gets a list of all delivery requests, optionally filtered by status, livreur ID, or order ID.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved list"),
+        @ApiResponse(responseCode = "400", description = "Invalid filter parameter value"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping
+    public ResponseEntity<List<DeliveryRequestDTO>> getAllDeliveryRequests(
+            @RequestParam(required = false) DeliveryStatus status,
+            @RequestParam(required = false) Long livreurId,
+            @RequestParam(required = false) Long orderId
+    ) {
+        log.info("Received request to get all delivery requests with filters - Status: {}, LivreurID: {}, OrderID: {}", 
+                 status, livreurId, orderId);
+        try {
+            List<DeliveryRequestDTO> requests = deliveryRequestService.getAllDeliveryRequests(status, livreurId, orderId);
+            if (requests.isEmpty()) {
+                return ResponseEntity.noContent().build(); // Return 204 if no requests match
+            } else {
+                return ResponseEntity.ok(requests);
+            }
+        } catch (Exception e) {
+            log.error("Error retrieving delivery requests with filters - Status: {}, LivreurID: {}, OrderID: {}", 
+                      status, livreurId, orderId, e);
+            // Return 500 for unexpected errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null); // Avoid sending error details in production for generic errors
+        }
+    }
 
     @Operation(summary = "Create a new delivery request", description = "Creates a new delivery request with the specified information.")
     @ApiResponses(value = {
@@ -108,6 +145,83 @@ public class DeliveryRequestController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", (Object)"An error occurred during auto-assignment: " + e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Update delivery request destination",
+               description = "Updates the destination coordinates of a specific delivery request and recalculates the delivery fee.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Destination updated and fee recalculated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data (e.g., invalid coordinates)"),
+        @ApiResponse(responseCode = "404", description = "Delivery request not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error during update or calculation")
+    })
+    @PatchMapping("/{id}/destination") // Using PATCH as we are partially updating the resource
+    public ResponseEntity<?> updateDestination(@PathVariable Long id, @Valid @RequestBody UpdateDeliveryDestinationDTO updateDto) {
+        try {
+            DeliveryRequestDTO updatedDto = deliveryRequestService.updateDestinationAndRecalculateFee(id, updateDto);
+            return ResponseEntity.ok(updatedDto);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", (Object)e.getMessage()));
+        } catch (IllegalArgumentException e) { // Catch validation errors from DTO or service
+            return ResponseEntity.badRequest().body(Map.of("error", (Object)e.getMessage()));
+        } catch (IllegalStateException e) { // Catch potential state issues (e.g., order missing, cannot update status)
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", (Object)e.getMessage()));
+        } catch (Exception e) {
+            // Generic catch for other unexpected errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", (Object)("An unexpected error occurred: " + e.getMessage())));
+        }
+    }
+
+    @Operation(summary = "Update delivery request status",
+               description = "Updates the status of a specific delivery request. Handles livreur availability based on status transitions.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Status updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data (e.g., invalid status)"),
+        @ApiResponse(responseCode = "404", description = "Delivery request not found"),
+        @ApiResponse(responseCode = "409", description = "Conflict - e.g., trying to change status from SUCCESSFUL, or invalid transition."),
+        @ApiResponse(responseCode = "500", description = "Internal server error during update")
+    })
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateDeliveryStatusDTO statusDto) {
+        try {
+            DeliveryRequestDTO updatedDto = deliveryRequestService.updateDeliveryStatus(id, statusDto);
+            return ResponseEntity.ok(updatedDto);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", (Object)e.getMessage()));
+        } catch (IllegalArgumentException e) { // Catch validation errors from DTO
+            return ResponseEntity.badRequest().body(Map.of("error", (Object)e.getMessage()));
+        } catch (IllegalStateException e) { // Catch invalid state transitions (e.g., from SUCCESSFUL)
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", (Object)e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error updating status for delivery request {}", id, e); // Log unexpected errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", (Object)("An unexpected error occurred while updating status: " + e.getMessage())));
+        }
+    }
+
+    @Operation(summary = "Delete a delivery request",
+               description = "Deletes a delivery request only if its status is ASSIGNED or IN_TRANSIT. Updates livreur availability.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Delivery request successfully deleted"),
+        @ApiResponse(responseCode = "404", description = "Delivery request not found"),
+        @ApiResponse(responseCode = "409", description = "Conflict - Deletion not allowed for the current status (e.g., PENDING, SUCCESSFUL)"),
+        @ApiResponse(responseCode = "500", description = "Internal server error during deletion")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteDeliveryRequest(@PathVariable Long id) {
+        try {
+            deliveryRequestService.deleteDeliveryRequest(id);
+            return ResponseEntity.noContent().build(); // HTTP 204 No Content for successful deletion
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", (Object)e.getMessage()));
+        } catch (IllegalStateException e) { // Catch the specific exception for disallowed status
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", (Object)e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error deleting delivery request {}", id, e); // Log unexpected errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", (Object)("An unexpected error occurred while deleting the delivery request: " + e.getMessage())));
         }
     }
 }

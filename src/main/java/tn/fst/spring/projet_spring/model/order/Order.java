@@ -58,7 +58,7 @@ public class Order {
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Invoice invoice;
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "order", orphanRemoval = true)
     private DeliveryRequest deliveryRequest;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
