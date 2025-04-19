@@ -7,8 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ResponseStatusException;
-import tn.fst.spring.projet_spring.exception.ErrorResponse;
-import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
+
 
 import java.time.LocalDateTime;
 import java.util.Map;

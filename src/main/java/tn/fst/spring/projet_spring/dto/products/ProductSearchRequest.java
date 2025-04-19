@@ -10,6 +10,8 @@ public class ProductSearchRequest {
     private String categoryName;
     private Double minPrice;
     private Double maxPrice;
+    private Double minWeight;
+    private Double maxWeight;
     private Integer minStock;
     private Integer maxStock;
     private Integer page = 0;

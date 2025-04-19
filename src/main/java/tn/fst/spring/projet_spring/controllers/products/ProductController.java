@@ -73,6 +73,10 @@ public class ProductController {
                             schema = @Schema(type = "number", format = "double")),
                     @Parameter(name = "maxPrice", in = ParameterIn.QUERY, description = "Prix maximum",
                             schema = @Schema(type = "number", format = "double")),
+                    @Parameter(name = "minWeight", in = ParameterIn.QUERY, description = "Poids minimum (kg)",
+                            schema = @Schema(type = "number", format = "double")),
+                    @Parameter(name = "maxWeight", in = ParameterIn.QUERY, description = "Poids maximum (kg)",
+                            schema = @Schema(type = "number", format = "double")),
                     @Parameter(name = "minStock", in = ParameterIn.QUERY, description = "Quantité de stock minimum",
                             schema = @Schema(type = "integer")),
                     @Parameter(name = "maxStock", in = ParameterIn.QUERY, description = "Quantité de stock maximum",
@@ -97,6 +101,8 @@ public class ProductController {
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Double minWeight,
+            @RequestParam(required = false) Double maxWeight,
             @RequestParam(required = false) Integer minStock,
             @RequestParam(required = false) Integer maxStock,
             @RequestParam(defaultValue = "0") Integer page,
@@ -110,6 +116,8 @@ public class ProductController {
         searchRequest.setCategoryName(categoryName);
         searchRequest.setMinPrice(minPrice);
         searchRequest.setMaxPrice(maxPrice);
+        searchRequest.setMinWeight(minWeight);
+        searchRequest.setMaxWeight(maxWeight);
         searchRequest.setMinStock(minStock);
         searchRequest.setMaxStock(maxStock);
         searchRequest.setPage(page);

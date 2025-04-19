@@ -12,7 +12,7 @@ public class DeliveryRequest {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "order_id", nullable = false, unique = true)
     private Order order;
 
     @ManyToOne
@@ -26,6 +26,9 @@ public class DeliveryRequest {
     @Column(nullable = false)
     private DeliveryStatus status;
 
+    private double destinationLat;
+    private double destinationLon;
+
     public void assignLivreur(Livreur livreur) {
         this.livreur = livreur;
         this.status = DeliveryStatus.ASSIGNED;
@@ -34,5 +37,25 @@ public class DeliveryRequest {
     public void calculateDeliveryFee() {
         // Implementation of delivery fee calculation logic
         this.deliveryFee = 5.0; // Base fee + additional logic
+    }
+
+    public double getDestinationLat() {
+        return destinationLat;
+    }
+
+    public void setDestinationLat(double destinationLat) {
+        this.destinationLat = destinationLat;
+    }
+
+    public double getDestinationLon() {
+        return destinationLon;
+    }
+
+    public void setDestinationLon(double destinationLon) {
+        this.destinationLon = destinationLon;
+    }
+
+    public Order getOrder() {
+        return order;
     }
 }

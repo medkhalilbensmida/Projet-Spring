@@ -29,7 +29,7 @@ public class Order {
     @Column(nullable = false, unique = true)
     private String orderNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

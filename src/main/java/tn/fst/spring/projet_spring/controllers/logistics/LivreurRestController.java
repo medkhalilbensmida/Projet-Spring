@@ -131,7 +131,14 @@ public class LivreurRestController {
     public ResponseEntity<List<DeliveryRequestDTO>> getAssignedDeliveries(@PathVariable Long id) {
         List<DeliveryRequest> deliveries = livreurService.getAssignedDeliveries(id);
         List<DeliveryRequestDTO> dtos = deliveries.stream()
-                .map(dr -> new DeliveryRequestDTO(dr.getId(), dr.getDeliveryFee(), dr.getStatus(), dr.getOrder().getId()))
+                .map(dr -> new DeliveryRequestDTO(
+                        dr.getId(),
+                        dr.getDeliveryFee(),
+                        dr.getStatus(),
+                        dr.getOrder().getId(),
+                        dr.getDestinationLat(), // Add destination lat
+                        dr.getDestinationLon()  // Add destination lon
+                ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
