@@ -97,6 +97,7 @@ public class SecurityConfig {
 
                         // Livreurs
                         .requestMatchers("/api/livreurs/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER")
+                        .requestMatchers("/api/deliveryRequests/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER")
 
                         // Autres routes → protégées
                         .anyRequest().authenticated()

@@ -12,6 +12,8 @@ import tn.fst.spring.projet_spring.repositories.auth.*;
 import tn.fst.spring.projet_spring.repositories.products.*;
 import tn.fst.spring.projet_spring.repositories.order.*;
 import tn.fst.spring.projet_spring.repositories.logistics.*;
+import tn.fst.spring.projet_spring.repositories.logistics.ComplaintRepository;
+import tn.fst.spring.projet_spring.repositories.logistics.ResolutionRepository;
 
 import java.util.*;
 import java.time.LocalDateTime;
@@ -33,7 +35,9 @@ public class DataInitializer {
             LivreurRepository livreurRepository,
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
-            DeliveryRequestRepository deliveryRequestRepository
+            DeliveryRequestRepository deliveryRequestRepository,
+            ComplaintRepository complaintRepository,
+            ResolutionRepository resolutionRepository
     ) {
 
         return args -> {
@@ -117,6 +121,7 @@ public class DataInitializer {
 
             User customerFadi = userRepository.findByEmail("fadi.abaidi@mail.com").orElseThrow();
             User customerYasmine = userRepository.findByEmail("yasmine.benslimane@mail.com").orElseThrow();
+            User customerHedi = userRepository.findByEmail("hedi.aissi@mail.com").orElseThrow();
             Product huileOlive = productRepository.findByBarcode("6191234567890").orElseThrow();
             Product dattes = productRepository.findByBarcode("6192345678901").orElseThrow();
 
@@ -139,7 +144,11 @@ public class DataInitializer {
             Order order6 = createOrder(orderRepository, orderItemRepository, customerYasmine, dattes, 5, "ORD006");
             createUnassignedDeliveryRequest(deliveryRequestRepository, order6, 7.5, 36.8550, 10.1850);
 
-            System.out.println("✅ Initialisation complète réussie.");
+            createComplaintIfNotExist(complaintRepository, customerFadi, order1, "L'huile d'olive a fui pendant la livraison.");
+            createComplaintIfNotExist(complaintRepository, customerYasmine, order6, "Les dattes reçues ne semblent pas fraîches.");
+            Complaint complaint3 = createComplaintIfNotExist(complaintRepository, customerHedi, order5, "Commande marquée livrée mais jamais reçue."); // Example using Hedi
+
+            System.out.println("✅ Initialisation complète réussie (avec plaintes).");
         };
 
     }
@@ -339,4 +348,30 @@ public class DataInitializer {
         });
     }
 
+    private Complaint createComplaintIfNotExist(ComplaintRepository complaintRepo, User user, Order order, String description) {
+        // Simple check based on user, order, and description to avoid duplicates during testing restarts
+        boolean exists = complaintRepo.findAll().stream()
+                .anyMatch(c -> c.getUser().getId().equals(user.getId()) &&
+                               c.getOrder().getId().equals(order.getId()) &&
+                               c.getDescription().equals(description));
+
+        if (!exists) {
+            Complaint complaint = new Complaint();
+            complaint.setUser(user);
+            complaint.setOrder(order);
+            complaint.setDescription(description);
+            complaint.setStatus(ComplaintStatus.OPEN);
+            Complaint savedComplaint = complaintRepo.save(complaint);
+            System.out.println("Plainte créée pour la commande " + order.getOrderNumber() + " par " + user.getUsername());
+            return savedComplaint;
+        } else {
+            System.out.println("Plainte similaire déjà existante pour la commande " + order.getOrderNumber() + " par " + user.getUsername());
+            // Find and return the existing one for potential use later in the initializer if needed
+            return complaintRepo.findAll().stream()
+                .filter(c -> c.getUser().getId().equals(user.getId()) &&
+                              c.getOrder().getId().equals(order.getId()) &&
+                              c.getDescription().equals(description))
+                .findFirst().orElse(null);
+        }
+    }
 }
