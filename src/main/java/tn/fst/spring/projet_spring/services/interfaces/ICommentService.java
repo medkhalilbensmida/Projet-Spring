@@ -10,5 +10,6 @@ public interface ICommentService {
     List<CommentResponseDTO> getCommentsByTopic(Long topicId);
     void deleteComment(Long id);
     CommentResponseDTO updateComment(Long commentId, CommentRequestDTO request);
-
+    CommentResponseDTO dislikeComment(Long commentId);
+    CommentResponseDTO likeComment(Long commentId);
 }

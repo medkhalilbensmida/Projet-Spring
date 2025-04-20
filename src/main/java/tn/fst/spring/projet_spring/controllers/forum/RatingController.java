@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/rate")
 public class RatingController {
-    private IRatingService ratingService;
+    private final IRatingService ratingService;
 
     @PostMapping
     public ResponseEntity<RatingDTO> createRating (@RequestBody RatingDTO request) {

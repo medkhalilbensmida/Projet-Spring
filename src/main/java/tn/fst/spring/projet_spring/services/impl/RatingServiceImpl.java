@@ -11,6 +11,7 @@ import tn.fst.spring.projet_spring.repositories.forum.ForumTopicRepository;
 import tn.fst.spring.projet_spring.repositories.forum.RatingRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IRatingService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +30,7 @@ public class RatingServiceImpl implements IRatingService {
         rating.setUser(user);
         rating.setTopic(topic);
         rating.setRating(request.getRating());
+        rating.setCreatedAt(LocalDateTime.now());
         Rating saved=ratingRepository.save(rating);
         updateTopicAverageRating(topic);
         return mapToResponseDTO(saved);

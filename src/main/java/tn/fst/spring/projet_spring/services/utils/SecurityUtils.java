@@ -9,8 +9,9 @@ public class SecurityUtils {
     public static User getCurrentUser(UserRepository userRepository) {
         Authentication auth= SecurityContextHolder.getContext().getAuthentication();
         String username=auth.getName();
+        System.out.print(username);
         return userRepository.findByEmail(username)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé ou n'a pas le droit"));
 
     }
 }

@@ -18,7 +18,7 @@ public class Rating {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false,columnDefinition = "DOUBLE CHECK (rating >= 1 AND rating <= 5)")
+    @Column(nullable = false)
     private Double rating;
 
     @ManyToOne
