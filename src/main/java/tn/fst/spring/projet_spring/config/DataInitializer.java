@@ -15,7 +15,8 @@ import tn.fst.spring.projet_spring.repositories.logistics.*;
 
 import java.util.*;
 import java.time.LocalDateTime;
-import java.util.concurrent.ThreadLocalRandom; // Import for random coordinates
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Configuration
 public class DataInitializer {
@@ -35,8 +36,8 @@ public class DataInitializer {
             OrderItemRepository orderItemRepository,
             DeliveryRequestRepository deliveryRequestRepository
     ) {
-
         return args -> {
+            // 1. Initialisation des rôles
             insertRoleIfNotExist(roleRepository, "ROLE_ADMIN", "Administrateur principal");
             insertRoleIfNotExist(roleRepository, "ROLE_CUSTOMER", "Client consommateur");
             insertRoleIfNotExist(roleRepository, "ROLE_PRODUCT_MANAGER", "Responsable des produits");
@@ -56,7 +57,19 @@ public class DataInitializer {
             insertUserIfNotExist(userRepository, "Latifa Khemiri", "latifa.delivery@consummi.tn", "delivery123", "ROLE_DELIVERY_MANAGER", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Nadia Ferjani", "nadia.event@consummi.tn", "event123", "ROLE_EVENT_MANAGER", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Rami Gharbi", "rami.event@consummi.tn", "event123", "ROLE_EVENT_MANAGER", roleRepository, passwordEncoder);
-            insertUserIfNotExist(userRepository, "Ahmed edf", "test", "test", "ROLE_ADMIN", roleRepository, passwordEncoder);
+
+            // Ajout de plus d'utilisateurs pour les statistiques
+            for (int i = 1; i <= 50; i++) {
+                insertUserIfNotExist(userRepository,
+                        "Client " + i,
+                        "client" + i + "@mail.com",
+                        "customer123",
+                        "ROLE_CUSTOMER",
+                        roleRepository,
+                        passwordEncoder);
+            }
+
+            // 3. Initialisation des catégories
             insertCategoryIfNotExist(categoryRepository, "Alimentation", "Produits alimentaires tunisiens");
             insertCategoryIfNotExist(categoryRepository, "Artisanat", "Produits artisanaux tunisiens");
             insertCategoryIfNotExist(categoryRepository, "Cosmétique", "Produits cosmétiques naturels tunisiens");
@@ -66,6 +79,7 @@ public class DataInitializer {
             insertCategoryIfNotExist(categoryRepository, "Cuisine", "Ustensiles de cuisine traditionnelle");
             insertCategoryIfNotExist(categoryRepository, "Décoration", "Articles de décoration");
 
+            // 4. Initialisation des rayons
             insertShelfIfNotExist(shelfRepository, "Rayon sec", "Normal", 0, 0, 3, 3);
             insertShelfIfNotExist(shelfRepository, "Rayon frais", "Réfrigéré", 3, 0, 3, 3);
             insertShelfIfNotExist(shelfRepository, "Rayon artisanal", "Normal", 0, 3, 3, 3);
@@ -74,39 +88,102 @@ public class DataInitializer {
             insertShelfIfNotExist(shelfRepository, "Rayon épicerie", "Normal", 3, 6, 3, 3);
             insertShelfIfNotExist(shelfRepository, "Rayon décoration", "Fragile", 6, 0, 3, 3);
 
-// 5. Produits initiaux (fortement enrichi)
+            // 5. Produits initiaux (fortement enrichi)
+            // Alimentation
+            insertProduct("Huile d'olive Tunisienne", "6191234567890", "Huile extra vierge", 25.5, "Alimentation", 100, 10, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Dattes Deglet Nour", "6191234567891", "Dattes premium 500g", 18.0, "Alimentation", 150, 20, "Rayon sec", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Miel de thym", "6191234567892", "Miel naturel", 35.0, "Alimentation", 40, 8, "Rayon sec", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Harissa", "6191234567893", "Pâte de piment 250g", 8.5, "Alimentation", 75, 15, "Rayon sec", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Couscous fin", "6191234567894", "Couscous 1kg", 6.0, "Alimentation", 120, 30, "Rayon sec", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Confiture de figue", "6191234567895", "Confiture artisanale", 12.0, "Alimentation", 50, 10, "Rayon frais", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Biscuits traditionnels", "6191234567896", "Biscuits aux amandes", 15.0, "Alimentation", 80, 15, "Rayon sec", 1, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Sauce tomate", "6191234567897", "Sauce naturelle", 7.5, "Alimentation", 90, 20, "Rayon sec", 2, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Pâtes artisanales", "6191234567898", "Pâtes fraîches", 9.0, "Alimentation", 60, 12, "Rayon frais", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Olives vertes", "6191234567899", "Olives marinées", 11.0, "Alimentation", 70, 14, "Rayon sec", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
 
-// Alimentation
-            insertProduct("Huile d'olive Tunisienne", "6191234567890", "Huile extra vierge", 25.5, 1.0, "Alimentation", 100, 10, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Dattes Deglet Nour", "6192345678901", "Dattes premium 500g", 18.0, 0.5, "Alimentation", 150, 20, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Miel de thym", "6197890123456", "Miel naturel", 35.0, 0.5, "Alimentation", 40, 8, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Harissa", "6191234509876", "Pâte de piment 250g", 8.5, 0.25, "Alimentation", 75, 15, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Couscous fin", "6191234512345", "Couscous 1kg", 6.0, 1.0, "Alimentation", 120, 30, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Confiture de figue", "6191234523456", "Confiture artisanale", 12.0, 0.3, "Alimentation", 50, 10, "Rayon frais", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            // Artisanat
+            insertProduct("Poterie de Nabeul", "6192345678901", "Pot décoratif", 45.0, "Artisanat", 30, 5, "Rayon artisanal", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Tapis berbère", "6192345678902", "Tapis laine 2x3m", 320.0, "Artisanat", 15, 3, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Plateau en cuivre", "6192345678903", "Plateau gravé", 75.0, "Artisanat", 25, 5, "Rayon artisanal", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Vase en céramique", "6192345678904", "Vase décoratif", 55.0, "Artisanat", 20, 4, "Rayon décoration", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Plateau en bois", "6192345678905", "Bois d'olivier", 65.0, "Artisanat", 18, 3, "Rayon artisanal", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Théière traditionnelle", "6192345678906", "Théière en argent", 120.0, "Artisanat", 12, 2, "Rayon artisanal", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Moucharabieh", "6192345678907", "Décoration murale", 95.0, "Artisanat", 10, 2, "Rayon décoration", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Bracelet en argent", "6192345678908", "Bijou traditionnel", 45.0, "Artisanat", 25, 5, "Rayon artisanal", 2, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Plateau mosaïque", "6192345678909", "Mosaïque colorée", 85.0, "Artisanat", 15, 3, "Rayon artisanal", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Lampe en fer forgé", "6192345678910", "Lampe artisanale", 65.0, "Artisanat", 20, 4, "Rayon décoration", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
 
-// Artisanat
-            insertProduct("Poterie de Nabeul", "6193456789012", "Pot décoratif", 45.0, 2.5, "Artisanat", 30, 5, "Rayon artisanal", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Tapis berbère", "6193456712345", "Tapis laine 2x3m", 320.0, 15.0, "Artisanat", 15, 3, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Plateau en cuivre", "6193456723456", "Plateau gravé", 75.0, 1.5, "Artisanat", 25, 5, "Rayon artisanal", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Vase en céramique", "6193456734567", "Vase décoratif", 55.0, 1.8, "Artisanat", 20, 4, "Rayon décoration", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            // Cosmétique
+            insertProduct("Savon d'Alep", "6193456789012", "Savon naturel", 12.5, "Cosmétique", 80, 15, "Rayon sec", 2, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Huile d'argan", "6193456789013", "Huile cosmétique", 42.0, "Cosmétique", 35, 7, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Gommage au rhassoul", "6193456789014", "Masque argileux", 18.0, "Cosmétique", 45, 9, "Rayon sec", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Crème hydratante", "6193456789015", "Crème à l'huile d'olive", 25.0, "Cosmétique", 30, 6, "Rayon sec", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Shampoing naturel", "6193456789016", "Shampoing aux plantes", 20.0, "Cosmétique", 40, 8, "Rayon sec", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Eau de rose", "6193456789017", "Eau florale", 15.0, "Cosmétique", 50, 10, "Rayon sec", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Masque visage", "6193456789018", "Masque argile", 22.0, "Cosmétique", 35, 7, "Rayon sec", 1, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Gel douche", "6193456789019", "Gel à la lavande", 18.0, "Cosmétique", 45, 9, "Rayon sec", 2, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Baume à lèvres", "6193456789020", "Baume naturel", 10.0, "Cosmétique", 60, 12, "Rayon sec", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Parfum naturel", "6193456789021", "Parfum oriental", 50.0, "Cosmétique", 25, 5, "Rayon sec", 2, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
 
-// Cosmétique
-            insertProduct("Savon d'Alep", "6194567890123", "Savon naturel", 12.5, 0.15, "Cosmétique", 80, 15, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Huile d'argan", "6194567812345", "Huile cosmétique", 42.0, 0.2, "Cosmétique", 35, 7, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Gommage au rhassoul", "6194567823456", "Masque argileux", 18.0, 0.25, "Cosmétique", 45, 9, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            // Boissons
+            insertProduct("Thé à la menthe", "6194567890123", "Thé vert 250g", 15.0, "Boissons", 60, 12, "Rayon boissons", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Jus de grenade", "6194567890124", "Jus 100% naturel", 8.0, "Boissons", 90, 18, "Rayon frais", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Café moulu", "6194567890125", "Café tunisien", 22.0, "Boissons", 40, 8, "Rayon boissons", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Sirop de grenadine", "6194567890126", "Sirop artisanal", 12.0, "Boissons", 50, 10, "Rayon boissons", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Eau minérale", "6194567890127", "Eau de source", 3.0, "Boissons", 120, 30, "Rayon boissons", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Jus d'orange", "6194567890128", "Jus pressé", 7.0, "Boissons", 80, 16, "Rayon frais", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Infusion aux plantes", "6194567890129", "Mélange de plantes", 10.0, "Boissons", 45, 9, "Rayon boissons", 2, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Limonade artisanale", "6194567890130", "Limonade naturelle", 6.0, "Boissons", 70, 14, "Rayon boissons", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Vin de figue", "6194567890131", "Vin artisanal", 35.0, "Boissons", 20, 4, "Rayon boissons", 2, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Thé aux amandes", "6194567890132", "Thé parfumé", 18.0, "Boissons", 30, 6, "Rayon boissons", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
 
-// Boissons
-            insertProduct("Thé à la menthe", "6195678912345", "Thé vert 250g", 15.0, 0.25, "Boissons", 60, 12, "Rayon boissons", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Jus de grenade", "6195678923456", "Jus 100% naturel", 8.0, 1.0, "Boissons", 90, 18, "Rayon frais", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Café moulu", "6195678934567", "Café tunisien", 22.0, 0.5, "Boissons", 40, 8, "Rayon boissons", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            // Textile
+            insertProduct("Chéchia rouge", "6195678912345", "Chéchia traditionnelle", 35.0, "Textile", 25, 5, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Jebba homme", "6195678912346", "Tenue traditionnelle", 120.0, "Textile", 15, 3, "Rayon textile", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Foulard en soie", "6195678912347", "Foulard coloré", 45.0, "Textile", 20, 4, "Rayon textile", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Tunique femme", "6195678912348", "Tunique brodée", 65.0, "Textile", 18, 3, "Rayon textile", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Ceinture en cuir", "6195678912349", "Ceinture artisanale", 40.0, "Textile", 22, 4, "Rayon textile", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Chaussons brodés", "6195678912350", "Chaussons traditionnels", 30.0, "Textile", 25, 5, "Rayon textile", 1, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Sac en tissu", "6195678912351", "Sac artisanal", 25.0, "Textile", 30, 6, "Rayon textile", 2, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Gandoura homme", "6195678912352", "Robe traditionnelle", 85.0, "Textile", 15, 3, "Rayon textile", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Châle en laine", "6195678912353", "Châle chaud", 55.0, "Textile", 20, 4, "Rayon textile", 2, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Couvre-chef", "6195678912354", "Accessoire traditionnel", 28.0, "Textile", 25, 5, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
 
-// Textile
-            insertProduct("Chéchia rouge", "6196789123456", "Chéchia traditionnelle", 35.0, 0.1, "Textile", 25, 5, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Jebba homme", "6196789234567", "Tenue traditionnelle", 120.0, 0.8, "Textile", 15, 3, "Rayon textile", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            // Epicerie
+            insertProduct("Pâtes d'amande", "6196789123456", "Pâtes artisanales", 28.0, "Epicerie", 30, 6, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Fruits secs", "6196789123457", "Mélange premium", 32.0, "Epicerie", 45, 9, "Rayon épicerie", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Confiture d'orange", "6196789123458", "Confiture maison", 15.0, "Epicerie", 35, 7, "Rayon épicerie", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Miel de cactus", "6196789123459", "Miel rare", 45.0, "Epicerie", 20, 4, "Rayon épicerie", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Amandes grillées", "6196789123460", "Amandes naturelles", 25.0, "Epicerie", 40, 8, "Rayon épicerie", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Pistaches", "6196789123461", "Pistaches de qualité", 38.0, "Epicerie", 30, 6, "Rayon épicerie", 1, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Dattes farcies", "6196789123462", "Dattes aux amandes", 22.0, "Epicerie", 35, 7, "Rayon épicerie", 2, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Figues séchées", "6196789123463", "Figues biologiques", 28.0, "Epicerie", 25, 5, "Rayon épicerie", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Mélange oriental", "6196789123464", "Mélange de fruits secs", 35.0, "Epicerie", 30, 6, "Rayon épicerie", 2, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Pâte de sésame", "6196789123465", "Tahini artisanal", 18.0, "Epicerie", 40, 8, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
 
-// Epicerie
-            insertProduct("Pâtes d'amande", "6197891234567", "Pâtes artisanales", 28.0, 0.4, "Epicerie", 30, 6, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-            insertProduct("Fruits secs", "6197892345678", "Mélange premium", 32.0, 0.5, "Epicerie", 45, 9, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            // Cuisine
+            insertProduct("Tajine en terre", "6197890123456", "Tajine traditionnel", 55.0, "Cuisine", 20, 4, "Rayon artisanal", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Moulin à épices", "6197890123457", "Moulin en bois", 32.0, "Cuisine", 25, 5, "Rayon artisanal", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Plateau service", "6197890123458", "Plateau en laiton", 45.0, "Cuisine", 18, 3, "Rayon artisanal", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Couscoussier", "6197890123459", "Couscoussier inox", 65.0, "Cuisine", 15, 3, "Rayon artisanal", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Théière en cuivre", "6197890123460", "Théière traditionnelle", 75.0, "Cuisine", 12, 2, "Rayon artisanal", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Verres à thé", "6197890123461", "Set de 6 verres", 28.0, "Cuisine", 25, 5, "Rayon artisanal", 1, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Plateau à café", "6197890123462", "Plateau en argent", 95.0, "Cuisine", 10, 2, "Rayon artisanal", 2, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Mortier en marbre", "6197890123463", "Mortier et pilon", 42.0, "Cuisine", 20, 4, "Rayon artisanal", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Couteau de cuisine", "6197890123464", "Couteau artisanal", 35.0, "Cuisine", 22, 4, "Rayon artisanal", 2, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Set d'épices", "6197890123465", "Assortiment d'épices", 28.0, "Cuisine", 30, 6, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+
+            // Décoration
+            insertProduct("Miroir mosaïque", "6198901234567", "Miroir décoratif", 85.0, "Décoration", 15, 3, "Rayon décoration", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Plateau mural", "6198901234568", "Décoration murale", 65.0, "Décoration", 20, 4, "Rayon décoration", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Bougeoir en cuivre", "6198901234569", "Bougeoir artisanal", 45.0, "Décoration", 25, 5, "Rayon décoration", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Ventilateur mural", "6198901234570", "Ventilateur décoratif", 75.0, "Décoration", 18, 3, "Rayon décoration", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Table basse", "6198901234571", "Table en bois", 120.0, "Décoration", 10, 2, "Rayon décoration", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Pouf en cuir", "6198901234572", "Pouf traditionnel", 85.0, "Décoration", 15, 3, "Rayon décoration", 1, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Rideaux brodés", "6198901234573", "Rideaux artisanaux", 65.0, "Décoration", 20, 4, "Rayon décoration", 2, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Tableau tissé", "6198901234574", "Tableau traditionnel", 95.0, "Décoration", 12, 2, "Rayon décoration", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Lanterne en fer", "6198901234575", "Lanterne décorative", 55.0, "Décoration", 22, 4, "Rayon décoration", 2, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+            insertProduct("Plateau à bijoux", "6198901234576", "Plateau en céramique", 45.0, "Décoration", 25, 5, "Rayon décoration", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
 
             // 6. Insertion des livreurs avec coordonnées
             Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", false, 36.83 + ThreadLocalRandom.current().nextDouble(0.01, 0.02), 10.15 + ThreadLocalRandom.current().nextDouble(0.01, 0.02));
@@ -139,10 +216,32 @@ public class DataInitializer {
             Order order6 = createOrder(orderRepository, orderItemRepository, customerYasmine, dattes, 5, "ORD006");
             createUnassignedDeliveryRequest(deliveryRequestRepository, order6, 7.5, 36.8550, 10.1850);
 
-            System.out.println("✅ Initialisation complète réussie.");
-        };
 
+            System.out.println("✅ Initialisation complète réussie avec des données enrichies pour les statistiques.");
+        };
     }
+
+    // Méthodes utilitaires
+    private Product getRandomProduct(ProductRepository repo) {
+        List<Product> products = repo.findAll();
+        return products.get(new Random().nextInt(products.size()));
+    }
+
+    private User getRandomCustomer(UserRepository repo) {
+        List<User> customers = repo.findByRoleName("ROLE_CUSTOMER");
+        return customers.get(new Random().nextInt(customers.size()));
+    }
+
+    private Livreur getRandomLivreur(LivreurRepository repo) {
+        List<Livreur> livreurs = repo.findAll();
+        return livreurs.get(new Random().nextInt(livreurs.size()));
+    }
+
+    private DeliveryStatus getRandomDeliveryStatus() {
+        DeliveryStatus[] statuses = DeliveryStatus.values();
+        return statuses[new Random().nextInt(statuses.length)];
+    }
+
 
     private void insertRoleIfNotExist(RoleRepository repo, String name, String description) {
         repo.findByName(name).ifPresentOrElse(role -> {
@@ -197,8 +296,7 @@ public class DataInitializer {
         });
     }
 
-    private void insertProduct(String name, String barcode, String description, double price, double weight,
-                               String categoryName,
+    private void insertProduct(String name, String barcode, String description, double price, String categoryName,
                                int quantity, int minThreshold, String shelfName, int x, int y,
                                CategoryRepository categoryRepo, ShelfRepository shelfRepo,
                                ProductRepository productRepo, StockRepository stockRepo,
@@ -219,7 +317,6 @@ public class DataInitializer {
             product.setBarcode(barcode);
             product.setDescription(description);
             product.setPrice(price);
-            product.setWeight(weight);
             product.setCategory(category);
             product = productRepo.save(product);
 
@@ -320,7 +417,7 @@ public class DataInitializer {
                                                double destinationLat, double destinationLon) {
         if (order == null) {
             System.out.println("La commande est null. Impossible de créer la demande de livraison UNASSIGNED.");
-            return; 
+            return;
         }
 
         Optional<DeliveryRequest> existingRequest = deliveryRepo.findByOrder(order);
