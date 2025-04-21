@@ -176,27 +176,22 @@ public class ComplaintServiceImpl implements IComplaintService {
         }
         try {
             switch (resolution.getType()) {
-                case REFUND:
-                    log.info("Processing REFUND for resolution ID: {}, order ID: {}", resolutionId, order.getId());
+                case REMBOURSEMENT:
+                    log.info("Processing REMBOURSEMENT for resolution ID: {}, order ID: {}", resolutionId, order.getId());
                     // --- Actual refund logic ---
                     Double refundAmount = order.getTotalAmount(); // Example: refund full amount
                     String refundReason = "Refund approved for complaint ID: " + complaint.getId();
                     paymentService.initiateRefund(order.getId(), refundAmount, refundReason);
                     resolution.setStatus(ResolutionStatus.IMPLEMENTED);
                     break;
-                case REPLACEMENT:
-                    log.info("Processing REPLACEMENT for resolution ID: {}, order ID: {}", resolutionId, order.getId());
+                case ECHANGE:
+                    log.info("Processing ECHANGE for resolution ID: {}, order ID: {}", resolutionId, order.getId());
                     log.warn("Placeholder: Replacement tracking logic for resolution {} needs implementation.", resolutionId);
                     resolution.setStatus(ResolutionStatus.IMPLEMENTED);
                     break;
-                case CREDIT:
-                    log.info("Processing CREDIT for resolution ID: {}, order ID: {}", resolutionId, order.getId());
-                    log.warn("Placeholder: Credit logic for resolution {} needs implementation.", resolutionId);
-                    resolution.setStatus(ResolutionStatus.IMPLEMENTED);
-                    break;
-                case APOLOGY:
-                    log.info("Processing APOLOGY for resolution ID: {}, order ID: {}", resolutionId, order.getId());
-                    log.warn("Placeholder: Apology logic for resolution {} needs implementation.", resolutionId);
+                case REPARATION:
+                    log.info("Processing REPARATION for resolution ID: {}, order ID: {}", resolutionId, order.getId());
+                    log.warn("Placeholder: Repair logic for resolution {} needs implementation.", resolutionId);
                     resolution.setStatus(ResolutionStatus.IMPLEMENTED);
                     break;
                 default:

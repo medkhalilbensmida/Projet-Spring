@@ -14,6 +14,9 @@ import tn.fst.spring.projet_spring.repositories.order.*;
 import tn.fst.spring.projet_spring.repositories.logistics.*;
 import tn.fst.spring.projet_spring.repositories.logistics.ComplaintRepository;
 import tn.fst.spring.projet_spring.repositories.logistics.ResolutionRepository;
+import tn.fst.spring.projet_spring.repositories.payment.PaymentRepository;
+import tn.fst.spring.projet_spring.model.payment.Payment;
+import tn.fst.spring.projet_spring.model.payment.PaymentMethod;
 
 import java.util.*;
 import java.time.LocalDateTime;
@@ -37,7 +40,8 @@ public class DataInitializer {
             OrderItemRepository orderItemRepository,
             DeliveryRequestRepository deliveryRequestRepository,
             ComplaintRepository complaintRepository,
-            ResolutionRepository resolutionRepository
+            ResolutionRepository resolutionRepository,
+            PaymentRepository paymentRepository
     ) {
 
         return args -> {
@@ -147,6 +151,22 @@ public class DataInitializer {
             createComplaintIfNotExist(complaintRepository, customerFadi, order1, "L'huile d'olive a fui pendant la livraison.");
             createComplaintIfNotExist(complaintRepository, customerYasmine, order6, "Les dattes reçues ne semblent pas fraîches.");
             Complaint complaint3 = createComplaintIfNotExist(complaintRepository, customerHedi, order5, "Commande marquée livrée mais jamais reçue."); // Example using Hedi
+
+            // -- Seed initial payments for orders --
+            java.util.List<Order> seededOrders = java.util.Arrays.asList(order1, order2, order3, order4, order5, order6);
+            for (Order o : seededOrders) {
+                if (!paymentRepository.findByOrderId(o.getId()).isPresent()) {
+                    Payment p = new Payment();
+                    p.setTransactionId("INIT-" + java.util.UUID.randomUUID().toString().substring(0,8).toUpperCase());
+                    p.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+                    p.setAmount(o.getTotalAmount());
+                    p.setPaymentDate(LocalDateTime.now());
+                    p.setOrder(o);
+                    p.setSuccessful(true);
+                    paymentRepository.save(p);
+                    System.out.println("Initial payment created for order " + o.getOrderNumber());
+                }
+            }
 
             System.out.println("✅ Initialisation complète réussie (avec plaintes).");
         };
