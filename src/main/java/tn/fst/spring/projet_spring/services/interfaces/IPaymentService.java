@@ -19,4 +19,18 @@ public interface IPaymentService {
     List<PaymentResponse> getPaymentsByDateRange(LocalDateTime start, LocalDateTime end);
     List<PaymentResponse> getPaymentsByStatus(boolean successful);
     void deletePayment(Long id);
-    }
+
+
+    // --- New Method for Refund ---
+    /**
+     * Initiates a refund for a specific order.
+     * @param orderId The ID of the order to be refunded.
+     * @param amount The amount to refund (should ideally match original payment or be specified).
+     * @param reason A description or reason for the refund.
+     * @throws tn.fst.spring.projet_spring.exception.ResourceNotFoundException if the original payment for the order is not found.
+     * @throws IllegalStateException if the payment cannot be refunded (e.g., already refunded).
+     * @throws RuntimeException for errors during the refund process (e.g., payment gateway issues).
+     */
+    void initiateRefund(Long orderId, Double amount, String reason);
+}
+

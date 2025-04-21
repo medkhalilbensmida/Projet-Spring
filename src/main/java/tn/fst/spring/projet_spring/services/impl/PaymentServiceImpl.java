@@ -8,7 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.payment.PaymentRequest;
 import tn.fst.spring.projet_spring.dto.payment.PaymentResponse;
+
+import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
+
 import tn.fst.spring.projet_spring.model.auth.User;
+
 import tn.fst.spring.projet_spring.model.order.Order;
 import tn.fst.spring.projet_spring.model.order.OrderStatus;
 import tn.fst.spring.projet_spring.model.order.SaleType;
@@ -25,10 +29,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentServiceImpl implements IPaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
@@ -285,6 +291,51 @@ public class PaymentServiceImpl implements IPaymentService {
 
         // Now it's safe to delete the payment
         paymentRepository.delete(payment);
+    }
+
+    @Override
+    @Transactional
+    public void initiateRefund(Long orderId, Double amount, String reason) {
+        log.info("Initiating refund for orderId: {}, amount: {}, reason: {}", orderId, amount, reason);
+
+        // 1. Find the original payment for the order
+        Payment originalPayment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Original payment not found for orderId: " + orderId));
+
+        // 2. Basic validation (add more as needed)
+        if (!originalPayment.isSuccessful()) {
+            throw new IllegalStateException("Cannot refund a payment that was not successful (Payment ID: " + originalPayment.getId() + ")");
+        }
+        if (originalPayment.getAmount() < amount) {
+            log.warn("Refund amount {} exceeds original payment amount {} for payment ID {}", amount, originalPayment.getAmount(), originalPayment.getId());
+            // Optionally throw exception or cap refund
+        }
+        // Check if already refunded (by notes or a dedicated field)
+        if (originalPayment.getNotes() != null && originalPayment.getNotes().contains("Refunded:")) {
+            throw new IllegalStateException("Payment ID " + originalPayment.getId() + " appears to have already been refunded.");
+        }
+
+        // 3. Placeholder for Payment Gateway Interaction
+        boolean refundSuccessful = true; // Replace with actual gateway call
+        log.warn("Placeholder: Actual payment gateway refund call is needed here for payment ID: {}", originalPayment.getId());
+
+        // 4. Update Payment Entity
+        if (refundSuccessful) {
+            String refundNote = String.format("Refunded: %.2f on %s. Reason: %s", amount, java.time.LocalDateTime.now(), reason);
+            originalPayment.setNotes(originalPayment.getNotes() == null ? refundNote : originalPayment.getNotes() + "\n" + refundNote);
+            paymentRepository.save(originalPayment);
+            log.info("Successfully processed refund and updated notes for payment ID: {}", originalPayment.getId());
+            // 5. (Optional) Update Order Status
+            Order order = originalPayment.getOrder();
+            if (order != null) {
+                order.setStatus(OrderStatus.RETURNED);
+                orderRepository.save(order);
+                log.info("Updated order status to {} for order ID: {}", order.getStatus(), order.getId());
+            }
+        } else {
+            log.error("Refund processing failed (e.g., payment gateway declined) for payment ID: {}", originalPayment.getId());
+            throw new RuntimeException("Refund processing failed for payment ID: " + originalPayment.getId());
+        }
     }
 
     private String generateTransactionId() {
