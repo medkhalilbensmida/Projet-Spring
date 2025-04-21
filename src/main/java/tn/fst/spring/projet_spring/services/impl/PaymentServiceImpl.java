@@ -26,12 +26,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class PaymentServiceImpl implements IPaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
