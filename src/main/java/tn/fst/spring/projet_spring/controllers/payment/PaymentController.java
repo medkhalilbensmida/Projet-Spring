@@ -29,25 +29,25 @@ public class PaymentController {
         return new ResponseEntity<>(paymentService.processPayment(paymentRequest), HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get payment by ID")
-    public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable Long id) {
-        return ResponseEntity.ok(paymentService.getPaymentById(id));
+    @GetMapping("/transaction/{transactionId}")
+    @Operation(summary = "Get payment by transaction ID")
+    public ResponseEntity<PaymentResponse> getPaymentByTransactionId(@PathVariable String transactionId) {
+        return ResponseEntity.ok(paymentService.getPaymentByTransactionId(transactionId));
     }
 
     @GetMapping
     @Operation(summary = "Get payments with optional filters")
     public ResponseEntity<List<PaymentResponse>> getPayments(
-            @RequestParam(required = false) String transactionId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(required = false) Long orderId,
             @RequestParam(required = false) PaymentMethod paymentMethod,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(required = false) Boolean successful) {
-        
+
         // Handle different filtering scenarios
-        if (transactionId != null) {
-            return ResponseEntity.ok(List.of(paymentService.getPaymentByTransactionId(transactionId)));
+        if (userId != null) {
+            return ResponseEntity.ok(paymentService.getPaymentsByUserId(userId));
         } else if (orderId != null) {
             return ResponseEntity.ok(List.of(paymentService.getPaymentByOrderId(orderId)));
         } else if (paymentMethod != null) {
@@ -67,4 +67,10 @@ public class PaymentController {
         paymentService.deletePayment(id);
         return ResponseEntity.noContent().build();
     }
+
+    /*@GetMapping("/my-payments")
+    @Operation(summary = "Get current user's payments")
+    public ResponseEntity<List<PaymentResponse>> getMyPayments() {
+        return ResponseEntity.ok(paymentService.getMyPayments());
+    }*/
 }

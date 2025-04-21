@@ -10,7 +10,7 @@ public class ForumTopicResponseDTO {
     private String title;
     private String content;
     private String authorUsername;
-    private int rating;
+    private double rating;
     private LocalDateTime createdAt;
 //    private List<CommentResponseDTO> comments; // Optionnel, selon besoin
 }

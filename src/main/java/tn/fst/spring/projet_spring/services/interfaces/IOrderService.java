@@ -1,5 +1,7 @@
 package tn.fst.spring.projet_spring.services.interfaces;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import tn.fst.spring.projet_spring.dto.order.OrderRequest;
 import tn.fst.spring.projet_spring.dto.order.OrderResponse;
 import tn.fst.spring.projet_spring.dto.order.OrderItemRequest;
@@ -21,6 +23,7 @@ public interface IOrderService {
     List<OrderResponse> findOrdersByDateRange(LocalDateTime start, LocalDateTime end);
     List<OrderResponse> findOrdersByUserAndDateRange(Long userId, LocalDateTime start, LocalDateTime end);
 
+
     // --- New Method for Exchange ---
     /**
      * Creates a new order representing an exchange based on an original order and complaint.
@@ -33,4 +36,10 @@ public interface IOrderService {
      * @throws IllegalStateException if stock is insufficient for items to ship.
      */
     OrderResponse createExchangeOrder(Long originalOrderId, Long complaintId, List<OrderItemRequest> itemsToShip, String reason);
+
+    OrderResponse cancelOrder(Long id);
+
+    List<OrderResponse> findOrdersBySaleTypeOptimized(SaleType saleType);
+    Page<OrderResponse> findOrdersBySaleTypePaginated(SaleType saleType, Pageable pageable);
+
 }

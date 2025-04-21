@@ -7,6 +7,5 @@ import lombok.Data;
 @Builder
 public class CommentRequestDTO {
     private String content;
-    private Long authorId;
     private Long topicId;
 }

@@ -25,11 +25,14 @@ public class ForumTopic {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
-    private int rating;
+    private double rating;//ceci est la valuer moyenne de rating
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL)
     private Set<Comment> comments = new HashSet<>();
+
+    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Rating> ratings = new HashSet<>();
 }

@@ -11,5 +11,6 @@ public class CommentResponseDTO {
     private String content;
     private String authorUsername;
     private int likes;
+    private int dislikes;
     private LocalDateTime createdAt;
 }

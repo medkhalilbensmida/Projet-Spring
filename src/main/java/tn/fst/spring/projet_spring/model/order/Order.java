@@ -8,7 +8,7 @@ import lombok.ToString;
 import tn.fst.spring.projet_spring.model.auth.User;
 import tn.fst.spring.projet_spring.model.logistics.Complaint;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
-import tn.fst.spring.projet_spring.model.payment.Invoice;
+import tn.fst.spring.projet_spring.model.invoice.Invoice;
 import tn.fst.spring.projet_spring.model.payment.Payment;
 
 import java.time.LocalDateTime;
@@ -100,5 +100,13 @@ public class Order {
         if (payment != null && payment.isSuccessful()) {
             this.status = OrderStatus.CONFIRMED;
         }
+    }
+    // Add this method to the Order class
+
+    /**
+     * Cancels the order and updates its status
+     */
+    public void cancel() {
+        this.status = OrderStatus.CANCELLED;
     }
 }

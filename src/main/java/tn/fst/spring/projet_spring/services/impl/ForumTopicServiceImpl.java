@@ -29,11 +29,7 @@ public class ForumTopicServiceImpl implements IForumTopicService {
         if (forumTopicRepository.existsByTitle(request.getTitle())) {
             throw new RuntimeException("Un sujet avec ce titre existe déjà !");
         }
-        //pour le moment on passe id dans body mais il faut utiliser id de user connecte
-        /*User author = SecurityUtils.getCurrentUser(userRepository);*/
-
-        User author = userRepository.findById(request.getAuthorId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User author = SecurityUtils.getCurrentUser(userRepository);
 
         ForumTopic topic = new ForumTopic();
         topic.setTitle(request.getTitle());
@@ -63,6 +59,7 @@ public class ForumTopicServiceImpl implements IForumTopicService {
 
     @Override
     public ForumTopicResponseDTO updateTopic(Long id, ForumTopicRequestDTO request) {
+         SecurityUtils.getCurrentUser(userRepository);
         ForumTopic topic = forumTopicRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Topic not found"));
 
@@ -75,6 +72,7 @@ public class ForumTopicServiceImpl implements IForumTopicService {
 
     @Override
     public void deleteTopic(Long id) {
+        SecurityUtils.getCurrentUser(userRepository);
         forumTopicRepository.deleteById(id);
     }
 
@@ -89,7 +87,7 @@ public class ForumTopicServiceImpl implements IForumTopicService {
                 .build();
     }
 
-    @Scheduled(cron = "0 0 0 * * *") //  pour tester on peut utulise "*/20 * * * * *"
+    @Scheduled(cron = "0 0 0 * * *") //  pour tester on peut utuliser "20 * * * * *"
     @Transactional
     public void deleteInactiveTopics() {
         LocalDateTime threshold = LocalDateTime.now().minusDays(30);//de meme ici on change a minusMinutes(1)
