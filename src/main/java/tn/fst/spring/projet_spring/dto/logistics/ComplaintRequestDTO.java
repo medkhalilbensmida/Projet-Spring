@@ -7,13 +7,9 @@ import lombok.Data;
 @Data
 public class ComplaintRequestDTO {
 
-    @NotNull(message = "User ID cannot be null")
-    private Long userId; // Or get from authenticated user
-
     @NotNull(message = "Order ID cannot be null")
     private Long orderId;
 
     @NotBlank(message = "Description cannot be blank")
     private String description;
 }
-

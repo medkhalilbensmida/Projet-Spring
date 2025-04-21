@@ -85,6 +85,22 @@ public class ComplaintController {
          return ResponseEntity.ok(resolution);
      }
 
+      @Operation(summary = "Approve a pending resolution (Admin/Manager only)")
+      @PostMapping("/resolutions/{resolutionId}/approve")
+      @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER_SERVICE')")
+      public ResponseEntity<ResolutionResponseDTO> approveResolution(@PathVariable Long resolutionId) {
+          ResolutionResponseDTO dto = complaintService.approveResolution(resolutionId);
+          return ResponseEntity.ok(dto);
+      }
+
+      @Operation(summary = "Reject a pending resolution (Admin/Manager only)")
+      @PostMapping("/resolutions/{resolutionId}/reject")
+      @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER_SERVICE')")
+      public ResponseEntity<ResolutionResponseDTO> rejectResolution(@PathVariable Long resolutionId) {
+          ResolutionResponseDTO dto = complaintService.rejectResolution(resolutionId);
+          return ResponseEntity.ok(dto);
+      }
+
       @Operation(summary = "Trigger processing of a resolution (Admin/Manager only)")
       @PostMapping("/resolutions/{resolutionId}/process")
       @PreAuthorize("hasAnyRole('ADMIN', 'CUSTOMER_SERVICE')")

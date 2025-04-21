@@ -18,8 +18,10 @@ public class Resolution {
     @Column(nullable = false)
     private ResolutionStatus status;
 
+    @Column(nullable = false)
+    private String description;
+
     @OneToOne
     @JoinColumn(name = "complaint_id", nullable = false)
     private Complaint complaint;
 }
-

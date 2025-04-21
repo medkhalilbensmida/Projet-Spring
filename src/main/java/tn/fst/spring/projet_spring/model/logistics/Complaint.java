@@ -2,7 +2,6 @@ package tn.fst.spring.projet_spring.model.logistics;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import tn.fst.spring.projet_spring.model.auth.User;
 import tn.fst.spring.projet_spring.model.order.Order;
 
 @Data
@@ -11,10 +10,6 @@ public class Complaint {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
 
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)

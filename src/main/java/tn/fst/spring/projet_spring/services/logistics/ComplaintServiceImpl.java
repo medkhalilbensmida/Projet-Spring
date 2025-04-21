@@ -2,6 +2,8 @@ package tn.fst.spring.projet_spring.services.logistics;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tn.fst.spring.projet_spring.dto.logistics.*;
@@ -41,13 +43,22 @@ public class ComplaintServiceImpl implements IComplaintService {
     @Transactional
     public ComplaintResponseDTO createComplaint(ComplaintRequestDTO complaintRequest) {
         log.info("Creating complaint for order ID: {}", complaintRequest.getOrderId());
-        User user = userRepository.findById(complaintRequest.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + complaintRequest.getUserId()));
+        // Determine user from security context
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + auth.getName()));
         Order order = orderRepository.findById(complaintRequest.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + complaintRequest.getOrderId()));
-
+        // Ensure the order belongs to the current user
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new IllegalStateException("Cannot file a complaint on an order that is not yours.");
+        }
+        // Prevent filing more than one complaint for this order
+        if (!complaintRepository.findByOrderId(complaintRequest.getOrderId()).isEmpty()) {
+            throw new IllegalStateException("A complaint for this order has already been filed.");
+        }
         Complaint complaint = new Complaint();
-        complaint.setUser(user);
+        // Associate complaint only with order, user derived from order
         complaint.setOrder(order);
         complaint.setDescription(complaintRequest.getDescription());
         complaint.setStatus(ComplaintStatus.OPEN);
@@ -76,7 +87,7 @@ public class ComplaintServiceImpl implements IComplaintService {
          if (!userRepository.existsById(userId)) {
              throw new ResourceNotFoundException("User not found with id: " + userId);
          }
-        return complaintRepository.findByUserId(userId).stream()
+        return complaintRepository.findByOrderUserId(userId).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
@@ -135,7 +146,8 @@ public class ComplaintServiceImpl implements IComplaintService {
         Resolution resolution = new Resolution();
         resolution.setComplaint(complaint);
         resolution.setType(resolutionRequest.getType());
-        resolution.setStatus(resolutionRequest.getStatus());
+        resolution.setDescription(resolutionRequest.getDescription());
+        resolution.setStatus(ResolutionStatus.PENDING);
         Resolution savedResolution = resolutionRepository.save(resolution);
         complaint.setResolution(savedResolution);
         complaint.setStatus(ComplaintStatus.IN_PROGRESS);
@@ -172,10 +184,19 @@ public class ComplaintServiceImpl implements IComplaintService {
                     paymentService.initiateRefund(order.getId(), refundAmount, refundReason);
                     resolution.setStatus(ResolutionStatus.IMPLEMENTED);
                     break;
-                
                 case REPLACEMENT:
-                    log.info("Processing REPAIR for resolution ID: {}, order ID: {}", resolutionId, order.getId());
-                    log.warn("Placeholder: Repair tracking logic for resolution {} needs implementation.", resolutionId);
+                    log.info("Processing REPLACEMENT for resolution ID: {}, order ID: {}", resolutionId, order.getId());
+                    log.warn("Placeholder: Replacement tracking logic for resolution {} needs implementation.", resolutionId);
+                    resolution.setStatus(ResolutionStatus.IMPLEMENTED);
+                    break;
+                case CREDIT:
+                    log.info("Processing CREDIT for resolution ID: {}, order ID: {}", resolutionId, order.getId());
+                    log.warn("Placeholder: Credit logic for resolution {} needs implementation.", resolutionId);
+                    resolution.setStatus(ResolutionStatus.IMPLEMENTED);
+                    break;
+                case APOLOGY:
+                    log.info("Processing APOLOGY for resolution ID: {}, order ID: {}", resolutionId, order.getId());
+                    log.warn("Placeholder: Apology logic for resolution {} needs implementation.", resolutionId);
                     resolution.setStatus(ResolutionStatus.IMPLEMENTED);
                     break;
                 default:
@@ -190,8 +211,41 @@ public class ComplaintServiceImpl implements IComplaintService {
             log.error("Error processing resolution ID: {}. Error: {}", resolutionId, e.getMessage(), e);
             resolution.setStatus(ResolutionStatus.REJECTED);
             resolutionRepository.save(resolution);
+            complaint.setStatus(ComplaintStatus.REJECTED);
+            complaintRepository.save(complaint);
             throw new RuntimeException("Failed to process resolution " + resolutionId, e);
         }
+    }
+
+    @Override
+    @Transactional
+    public ResolutionResponseDTO approveResolution(Long resolutionId) {
+        log.info("Approving resolution ID: {}", resolutionId);
+        Resolution resolution = resolutionRepository.findById(resolutionId)
+            .orElseThrow(() -> new ResourceNotFoundException("Resolution not found with id: " + resolutionId));
+        if (resolution.getStatus() != ResolutionStatus.PENDING) {
+            throw new IllegalStateException("Only pending resolutions can be approved. Current: " + resolution.getStatus());
+        }
+        resolution.setStatus(ResolutionStatus.APPROVED);
+        resolutionRepository.save(resolution);
+        return convertToResolutionResponse(resolution);
+    }
+
+    @Override
+    @Transactional
+    public ResolutionResponseDTO rejectResolution(Long resolutionId) {
+        log.info("Rejecting resolution ID: {}", resolutionId);
+        Resolution resolution = resolutionRepository.findById(resolutionId)
+            .orElseThrow(() -> new ResourceNotFoundException("Resolution not found with id: " + resolutionId));
+        if (resolution.getStatus() != ResolutionStatus.PENDING) {
+            throw new IllegalStateException("Only pending resolutions can be rejected. Current: " + resolution.getStatus());
+        }
+        resolution.setStatus(ResolutionStatus.REJECTED);
+        resolutionRepository.save(resolution);
+        Complaint complaint = resolution.getComplaint();
+        complaint.setStatus(ComplaintStatus.REJECTED);
+        complaintRepository.save(complaint);
+        return convertToResolutionResponse(resolution);
     }
 
     // --- Helper Methods ---
@@ -200,8 +254,10 @@ public class ComplaintServiceImpl implements IComplaintService {
         if (complaint.getResolution() != null) {
             resolutionDTO = convertToResolutionResponse(complaint.getResolution());
         }
-        String username = (complaint.getUser() != null) ? complaint.getUser().getUsername() : "N/A";
-        Long userId = (complaint.getUser() != null) ? complaint.getUser().getId() : null;
+        // Derive user info from associated order
+        User orderUser = complaint.getOrder().getUser();
+        String username = (orderUser != null) ? orderUser.getUsername() : "N/A";
+        Long userId = (orderUser != null) ? orderUser.getId() : null;
         String orderNumber = (complaint.getOrder() != null) ? complaint.getOrder().getOrderNumber() : "N/A";
         Long orderId = (complaint.getOrder() != null) ? complaint.getOrder().getId() : null;
         return ComplaintResponseDTO.builder()
@@ -224,6 +280,7 @@ public class ComplaintServiceImpl implements IComplaintService {
         return ResolutionResponseDTO.builder()
                 .id(resolution.getId())
                 .type(resolution.getType())
+                .description(resolution.getDescription())
                 .status(resolution.getStatus())
                 .complaintId(complaintId)
                 .build();

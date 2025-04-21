@@ -30,6 +30,12 @@ public interface IComplaintService {
     // Method for Admin to assign a resolution
     ResolutionResponseDTO assignResolution(Long complaintId, ResolutionRequestDTO resolutionRequest);
 
-     // Method to initiate the processing of the resolution
+    // Method for Admin to approve a pending resolution
+    ResolutionResponseDTO approveResolution(Long resolutionId);
+
+    // Method for Admin to reject a pending resolution
+    ResolutionResponseDTO rejectResolution(Long resolutionId);
+
+    // Method to initiate the processing of the resolution
     void processResolution(Long resolutionId);
 }

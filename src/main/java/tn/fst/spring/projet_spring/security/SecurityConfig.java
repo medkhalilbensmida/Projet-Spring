@@ -7,6 +7,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,6 +22,7 @@ import tn.fst.spring.projet_spring.security.jwt.CustomAccessDeniedHandler;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -98,6 +100,14 @@ public class SecurityConfig {
                         // Livreurs
                         .requestMatchers("/api/livreurs/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER")
                         .requestMatchers("/api/deliveryRequests/**").hasAnyRole("ADMIN", "DELIVERY_MANAGER")
+
+                        // Complaints & Resolutions
+                        .requestMatchers(HttpMethod.POST, "/api/complaints").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/complaints/**").hasAnyRole("ADMIN", "CUSTOMER_SERVICE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/complaints/*/status").hasAnyRole("ADMIN", "CUSTOMER_SERVICE")
+                        .requestMatchers(HttpMethod.POST, "/api/complaints/*/resolution").hasAnyRole("ADMIN", "CUSTOMER_SERVICE")
+                        .requestMatchers(HttpMethod.POST, "/api/complaints/resolutions/**").hasAnyRole("ADMIN", "CUSTOMER_SERVICE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/complaints/*").hasRole("ADMIN")
 
                         // Autres routes → protégées
                         .anyRequest().authenticated()

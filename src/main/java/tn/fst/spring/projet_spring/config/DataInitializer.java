@@ -351,13 +351,12 @@ public class DataInitializer {
     private Complaint createComplaintIfNotExist(ComplaintRepository complaintRepo, User user, Order order, String description) {
         // Simple check based on user, order, and description to avoid duplicates during testing restarts
         boolean exists = complaintRepo.findAll().stream()
-                .anyMatch(c -> c.getUser().getId().equals(user.getId()) &&
+                .anyMatch(c -> c.getOrder().getUser().getId().equals(user.getId()) &&
                                c.getOrder().getId().equals(order.getId()) &&
                                c.getDescription().equals(description));
 
         if (!exists) {
             Complaint complaint = new Complaint();
-            complaint.setUser(user);
             complaint.setOrder(order);
             complaint.setDescription(description);
             complaint.setStatus(ComplaintStatus.OPEN);
@@ -368,7 +367,7 @@ public class DataInitializer {
             System.out.println("Plainte similaire déjà existante pour la commande " + order.getOrderNumber() + " par " + user.getUsername());
             // Find and return the existing one for potential use later in the initializer if needed
             return complaintRepo.findAll().stream()
-                .filter(c -> c.getUser().getId().equals(user.getId()) &&
+                .filter(c -> c.getOrder().getUser().getId().equals(user.getId()) &&
                               c.getOrder().getId().equals(order.getId()) &&
                               c.getDescription().equals(description))
                 .findFirst().orElse(null);
