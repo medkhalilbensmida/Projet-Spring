@@ -7,11 +7,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.order.OrderRequest;
 import tn.fst.spring.projet_spring.dto.order.OrderResponse;
+import tn.fst.spring.projet_spring.model.auth.User;
 import tn.fst.spring.projet_spring.model.order.OrderStatus;
 import tn.fst.spring.projet_spring.model.order.SaleType;
+import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IOrderService;
 
 import java.time.LocalDateTime;
@@ -23,6 +27,7 @@ import java.util.List;
 @Tag(name = "Orders", description = "Order management API")
 public class OrderController {
     private final IOrderService orderService;
+    private final UserRepository userRepository;
 
     @PostMapping
     @Operation(summary = "Create a new order")
@@ -30,11 +35,7 @@ public class OrderController {
         return new ResponseEntity<>(orderService.createOrder(orderRequest), HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get order by ID")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.getOrderById(id));
-    }
+
 
     @GetMapping("/number/{orderNumber}")
     @Operation(summary = "Get order by order number")
@@ -63,6 +64,17 @@ public class OrderController {
         }
     }
 
+    /*
+    @GetMapping("/my-orders")
+    @Operation(summary = "Get current user's orders")
+    public ResponseEntity<List<OrderResponse>> getMyOrders() {
+        User currentUser = userRepository.findByEmail(
+                        SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        return ResponseEntity.ok(orderService.getOrdersByUser(currentUser.getId()));
+    }*/
+
     @PutMapping("/{id}/status")
     @Operation(summary = "Update order status")
     public ResponseEntity<OrderResponse> updateOrderStatus(
@@ -71,8 +83,14 @@ public class OrderController {
         return ResponseEntity.ok(orderService.updateOrderStatus(id, status));
     }
 
+    @PutMapping("/{id}/cancel")
+    @Operation(summary = "Cancel an order ")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(orderService.cancelOrder(id));
+    }
+
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete an order")
+    @Operation(summary = "Delete an order ")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();

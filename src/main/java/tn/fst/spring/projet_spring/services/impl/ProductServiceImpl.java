@@ -1,5 +1,6 @@
 package tn.fst.spring.projet_spring.services.impl;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -13,6 +14,7 @@ import tn.fst.spring.projet_spring.model.catalog.Category;
 import tn.fst.spring.projet_spring.model.catalog.Product;
 import tn.fst.spring.projet_spring.model.catalog.Stock;
 import tn.fst.spring.projet_spring.repositories.products.CategoryRepository;
+import tn.fst.spring.projet_spring.repositories.products.ProductPositionRepository;
 import tn.fst.spring.projet_spring.repositories.products.ProductRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IProductService;
 
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements IProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductPositionRepository productPositionRepository;
 
     @Autowired
     private BarcodeService barcodeService;
@@ -54,7 +57,7 @@ public class ProductServiceImpl implements IProductService {
 
         if (productRepository.findByBarcode(productRequest.getBarcode()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    " Le code-barres '" + productRequest.getBarcode() + "' est déjà utilisé par un autre produit.");
+                    " Le code-barres ' " + productRequest.getBarcode() + " ' est déjà utilisé par un autre produit.");
         }
 
         Category category = categoryRepository.findByName(productRequest.getCategoryName())
@@ -120,12 +123,20 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
+    @Transactional
     public void deleteProduct(Long id) {
-        if (!productRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Produit introuvable  !");
-        }
-        productRepository.deleteById(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Produit introuvable !")
+                );
+
+        // Supprimer d'abord toutes les positions associées
+        productPositionRepository.deleteAllByProductId(id);
+
+        // Supprimer le produit
+        productRepository.delete(product);
     }
+
 
     @Override
     public boolean verifyTunisianBarcode(String barcode) {
@@ -220,4 +231,6 @@ public class ProductServiceImpl implements IProductService {
 
         return convertToResponse(product);
     }
+
+
 }

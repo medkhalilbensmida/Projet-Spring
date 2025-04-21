@@ -7,5 +7,4 @@ import lombok.Data;
 public class ForumTopicRequestDTO {
     private String title;
     private String content;
-    private Long authorId;
 }

@@ -15,9 +15,9 @@ import java.util.List;
 public class CommentController {
     private final ICommentService commentService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<List<CommentResponseDTO>> getComments(@PathVariable long id) {
-        return ResponseEntity.ok(commentService.getCommentsByTopic(id));
+    @GetMapping("/{topicId}")
+    public ResponseEntity<List<CommentResponseDTO>> getComments(@PathVariable long topicId) {
+        return ResponseEntity.ok(commentService.getCommentsByTopic(topicId));
     }
     @PostMapping
     public ResponseEntity<CommentResponseDTO> createComment(@RequestBody CommentRequestDTO request){
@@ -31,6 +31,15 @@ public class CommentController {
     @PutMapping("/{id}")
     public ResponseEntity<CommentResponseDTO> updateComment(@PathVariable long id, @RequestBody CommentRequestDTO request) {
         return ResponseEntity.ok(commentService.updateComment(id, request));
+    }
+
+    @PutMapping("like/{id}")
+    public ResponseEntity<CommentResponseDTO> likeComment(@PathVariable long id) {
+        return ResponseEntity.ok(commentService.likeComment(id));
+    }
+    @PutMapping("dislike/{id}")
+    public ResponseEntity<CommentResponseDTO> dislikeComment(@PathVariable long id) {
+         return ResponseEntity.ok(commentService.dislikeComment(id));
     }
 
 

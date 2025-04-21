@@ -30,9 +30,7 @@ public class CommentServiceImpl implements ICommentService {
     @Override
     public CommentResponseDTO createComment(CommentRequestDTO request) {
         //pour le moment on passe id dans body mais il faut utiliser id de user connecte
-        /*User author = SecurityUtils.getCurrentUser(userRepository);*/
-        User author = userRepository.findById(request.getAuthorId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User author = SecurityUtils.getCurrentUser(userRepository);
 
         ForumTopic topic = forumTopicRepository.findById(request.getTopicId())
                 .orElseThrow(() -> new RuntimeException("Topic not found"));
@@ -61,6 +59,7 @@ public class CommentServiceImpl implements ICommentService {
 
     @Override
     public void deleteComment(Long id) {
+        SecurityUtils.getCurrentUser(userRepository);
         commentRepository.deleteById(id);
     }
 
@@ -68,14 +67,60 @@ public class CommentServiceImpl implements ICommentService {
     public CommentResponseDTO updateComment(Long commentId, CommentRequestDTO request) {
        Comment comment=commentRepository.findById(commentId).orElseThrow(() -> new RuntimeException("Comment not found"));
        //on verifie si c'est le meme user
-//        User author = SecurityUtils.getCurrentUser(userRepository);
-//        if(!author.getId().equals(comment.getAuthor().getId())){
-//            throw new RuntimeException("Vous n'avez pas le droit de modifier ce commentaire");
-//        }
+        SecurityUtils.getCurrentUser(userRepository);
+
         comment.setContent(request.getContent());
         Comment updated = commentRepository.save(comment);
         return mapToResponseDTO(updated);
     }
+    @Override
+    public CommentResponseDTO likeComment(Long commentId) {
+        User currentUser = SecurityUtils.getCurrentUser(userRepository);
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        if (comment.getLikedBy().contains(currentUser)) {
+            comment.setLikes(comment.getLikes() - 1);
+            comment.getLikedBy().remove(currentUser);
+        } else {
+            comment.setLikes(comment.getLikes() + 1);
+            comment.getLikedBy().add(currentUser);
+
+            if (comment.getDislikedBy().contains(currentUser)) {
+                comment.setDislikes(comment.getDislikes() - 1);
+                comment.getDislikedBy().remove(currentUser);
+            }
+        }
+
+        commentRepository.save(comment);
+        return mapToResponseDTO(comment);
+    }
+
+    @Override
+    public CommentResponseDTO dislikeComment(Long commentId) {
+        User currentUser = SecurityUtils.getCurrentUser(userRepository);
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        if (comment.getDislikedBy().contains(currentUser)) {
+            comment.setDislikes(comment.getDislikes() - 1);
+            comment.getDislikedBy().remove(currentUser);
+        } else {
+            comment.setDislikes(comment.getDislikes() + 1);
+            comment.getDislikedBy().add(currentUser);
+
+            if (comment.getLikedBy().contains(currentUser)) {
+                comment.setLikes(comment.getLikes() - 1);
+                comment.getLikedBy().remove(currentUser);
+            }
+        }
+
+        commentRepository.save(comment);
+        return mapToResponseDTO(comment);
+    }
+
+
+
 
     private CommentResponseDTO mapToResponseDTO(Comment comment) {
         return CommentResponseDTO.builder()
@@ -83,6 +128,7 @@ public class CommentServiceImpl implements ICommentService {
                 .content(comment.getContent())
                 .authorUsername(comment.getAuthor().getUsername())
                 .likes(comment.getLikes())
+                .dislikes(comment.getDislikes())
                 .createdAt(comment.getCreatedAt())
                 .build();
     }

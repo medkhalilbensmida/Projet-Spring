@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component
@@ -24,6 +25,13 @@ public class BadWordFilter {
     }
     public boolean containsBadWords(String content) {
         String normalized = content.toLowerCase();
-        return badWords.stream().anyMatch(normalized::contains);
+        for (String badWord : badWords) {
+            String regex = "\\b" + Pattern.quote(badWord.toLowerCase()) + "\\b";
+            if (Pattern.compile(regex).matcher(normalized).find()) {
+                return true;
+            }
+        }
+        return false;
     }
+
 }
