@@ -3,6 +3,7 @@ package tn.fst.spring.projet_spring.repositories.products;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,5 +31,8 @@ public interface ProductPositionRepository extends JpaRepository<ProductPosition
         @Param("ymax") Integer ymax
     );
 
+    @Modifying
+    @Query("DELETE FROM ProductPosition p WHERE p.product.id = :productId")
+    void deleteAllByProductId(@Param("productId") Long productId);
     
 }
