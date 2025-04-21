@@ -11,6 +11,9 @@ import tn.fst.spring.projet_spring.model.order.OrderItem;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @author claudia
+ */
 
 @Getter
 @Setter
@@ -31,25 +34,23 @@ public class Product {
     @Column(unique = true)
     private String barcode;
 
+    private double weight; // Weight in kilograms
+
     private String description;
 
     @Column(nullable = false)
     private double price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL)
     private Stock stock;
 
-    @ManyToMany
-    @JoinTable(
-            name = "product_shelves",
-            joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "shelf_id")
-    )
-    private Set<Shelf> shelves = new HashSet<>();
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
+    private Set<ProductPosition> positions = new HashSet<>();
+    
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
     private Set<OrderItem> orderItems = new HashSet<>();
@@ -59,5 +60,13 @@ public class Product {
 
     public boolean validateBarcode() {
         return barcode != null && barcode.matches("^\\d{12,13}$");
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 }

@@ -3,15 +3,15 @@ package tn.fst.spring.projet_spring.controllers.products;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import tn.fst.spring.projet_spring.dto.products.ProductRequest;
-import tn.fst.spring.projet_spring.dto.products.ProductResponse;
-import tn.fst.spring.projet_spring.dto.products.ProductSearchRequest;
-import tn.fst.spring.projet_spring.dto.products.ProductUpdateRequest;
+import org.springframework.web.multipart.MultipartFile;
+import tn.fst.spring.projet_spring.dto.products.*;
 import tn.fst.spring.projet_spring.services.interfaces.IProductService;
 
 import java.util.List;
@@ -73,6 +73,10 @@ public class ProductController {
                             schema = @Schema(type = "number", format = "double")),
                     @Parameter(name = "maxPrice", in = ParameterIn.QUERY, description = "Prix maximum",
                             schema = @Schema(type = "number", format = "double")),
+                    @Parameter(name = "minWeight", in = ParameterIn.QUERY, description = "Poids minimum (kg)",
+                            schema = @Schema(type = "number", format = "double")),
+                    @Parameter(name = "maxWeight", in = ParameterIn.QUERY, description = "Poids maximum (kg)",
+                            schema = @Schema(type = "number", format = "double")),
                     @Parameter(name = "minStock", in = ParameterIn.QUERY, description = "Quantité de stock minimum",
                             schema = @Schema(type = "integer")),
                     @Parameter(name = "maxStock", in = ParameterIn.QUERY, description = "Quantité de stock maximum",
@@ -97,6 +101,8 @@ public class ProductController {
             @RequestParam(required = false) String categoryName,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Double minWeight,
+            @RequestParam(required = false) Double maxWeight,
             @RequestParam(required = false) Integer minStock,
             @RequestParam(required = false) Integer maxStock,
             @RequestParam(defaultValue = "0") Integer page,
@@ -110,6 +116,8 @@ public class ProductController {
         searchRequest.setCategoryName(categoryName);
         searchRequest.setMinPrice(minPrice);
         searchRequest.setMaxPrice(maxPrice);
+        searchRequest.setMinWeight(minWeight);
+        searchRequest.setMaxWeight(maxWeight);
         searchRequest.setMinStock(minStock);
         searchRequest.setMaxStock(maxStock);
         searchRequest.setPage(page);
@@ -119,4 +127,23 @@ public class ProductController {
 
         return ResponseEntity.ok(productService.searchProducts(searchRequest));
     }
+
+    @Operation(summary = "Extraire le code-barres depuis une image uploadée")
+    @PostMapping(value = "/extract-barcode", consumes = "multipart/form-data")
+    public ResponseEntity<BarcodeExtractionResponse> extractBarcodeFromImage(
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(productService.extractBarcode(file));
+    }
+
+    @Operation(summary = "Extraire le code-barres depuis une image et retourner le produit correspondant si existant et tunisien")
+    @PostMapping(value = "/extract-product", consumes = "multipart/form-data")
+    public ResponseEntity<ProductResponse> extractProductFromBarcodeImage(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(productService.extractProductDetailsFromBarcodeImage(file));
+    }
+
+
+
+
+
+
 }

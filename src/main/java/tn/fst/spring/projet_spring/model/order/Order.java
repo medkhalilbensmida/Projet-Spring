@@ -29,7 +29,7 @@ public class Order {
     @Column(nullable = false, unique = true)
     private String orderNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -58,7 +58,7 @@ public class Order {
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Invoice invoice;
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "order", orphanRemoval = true)
     private DeliveryRequest deliveryRequest;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)

@@ -11,6 +11,7 @@ public class ProductResponse {
     private String barcode;
     private String description;
     private double price;
+    private double weight;
     private String category;
     private int stockQuantity;
 }

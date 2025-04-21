@@ -3,11 +3,12 @@ package tn.fst.spring.projet_spring.model.marketing;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Entity
 public class Advertisement {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -15,26 +16,49 @@ public class Advertisement {
     @Column(nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    private String url;
+
+    @Column(nullable = false, length = 1000)
+    private String description;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "channel_id")
     private AdvertisementChannel channel;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "targeted_audience_id")
+    private TargetedAudience targetedAudience;   
+
     @Column(nullable = false)
-    private LocalDateTime startDate;
+    private LocalDate startDate;
 
-    private LocalDateTime endDate;
+    @Column(nullable = false)
+    private LocalDate endDate;
 
+    @Column(nullable = false)
     private double cost;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AdvertisementType type;
+    @Column(nullable = false, length = 20)
+    private AdvertisementType type; // "image" ou "video"
 
-    @OneToOne(mappedBy = "advertisement", cascade = CascadeType.ALL)
-    private TargetAudience targetAudience;
-
-    public void trackPerformance() {
-        // Implementation of performance tracking logic
+    public enum AdvertisementType {
+        IMAGE,
+        VIDEO,
+        TEXT,
     }
-}
 
+    private int views = 0;
+
+    private int initialViews = 0;
+
+    @PrePersist
+    @PreUpdate
+    private void validateDates() {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("La date de fin doit être après la date de début.");
+        }
+    }
+
+
+}

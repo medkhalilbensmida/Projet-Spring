@@ -1,0 +1,12 @@
+package tn.fst.spring.projet_spring.dto.forum;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class CommentRequestDTO {
+    private String content;
+    private Long authorId;
+    private Long topicId;
+}
