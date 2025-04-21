@@ -129,19 +129,19 @@ public class DataInitializer {
             Order order1 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 2, "ORD001");
             createDeliveryRequest(deliveryRequestRepository, order1, livreur1, DeliveryStatus.DELIVERED, 5.0, 36.8008, 10.1815); // Tunis Centre
 
-            Order order2 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 1, "ORD002");
+            Order order2 = createOrder(orderRepository, orderItemRepository, customerYasmine, huileOlive, 1, "ORD002");
             createDeliveryRequest(deliveryRequestRepository, order2, livreur1, DeliveryStatus.DELIVERED, 5.0, 36.8454, 10.1941); // La Marsa
 
-            Order order3 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 3, "ORD003");
+            Order order3 = createOrder(orderRepository, orderItemRepository, customerHedi, huileOlive, 3, "ORD003");
             createDeliveryRequest(deliveryRequestRepository, order3, livreur2, DeliveryStatus.IN_TRANSIT, 6.0, 36.7948, 10.1007); // Manouba
 
             Order order4 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 1, "ORD004");
             createDeliveryRequest(deliveryRequestRepository, order4, livreur1, DeliveryStatus.ASSIGNED, 5.0, 36.8665, 10.1647); // Ariana
 
-            Order order5 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 2, "ORD005");
+            Order order5 = createOrder(orderRepository, orderItemRepository, customerYasmine, huileOlive, 2, "ORD005");
             createDeliveryRequest(deliveryRequestRepository, order5, livreur2, DeliveryStatus.DELIVERED, 6.0, 36.8028, 10.1797); // Lac 1
 
-            Order order6 = createOrder(orderRepository, orderItemRepository, customerYasmine, dattes, 5, "ORD006");
+            Order order6 = createOrder(orderRepository, orderItemRepository, customerFadi, dattes, 5, "ORD006");
             createUnassignedDeliveryRequest(deliveryRequestRepository, order6, 7.5, 36.8550, 10.1850);
 
             createComplaintIfNotExist(complaintRepository, customerFadi, order1, "L'huile d'olive a fui pendant la livraison.");
