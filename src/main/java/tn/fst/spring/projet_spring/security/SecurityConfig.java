@@ -75,6 +75,12 @@ public class SecurityConfig {
                         // Swagger
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/api-docs/**").permitAll()
 
+                        //Statistiques
+                        .requestMatchers(HttpMethod.GET, "/api/stats/users").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/stats/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/stats/inventory").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/stats/barcode").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+
                         // Produits
                         .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
