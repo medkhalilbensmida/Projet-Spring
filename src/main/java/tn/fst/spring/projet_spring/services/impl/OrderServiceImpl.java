@@ -146,10 +146,29 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public List<OrderResponse> findOrdersBySaleType(SaleType saleType) {
-        return orderRepository.findBySaleType(saleType)
+        // Solution basique - filtre en mémoire
+        return orderRepository.findAll().stream()
+                .filter(order -> order.getSaleType() == saleType)
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrderResponse> findOrdersBySaleTypeOptimized(SaleType saleType) {
+        // Solution optimisée avec spécifications JPA
+        return orderRepository.findAll((root, query, cb) ->
+                        cb.equal(root.get("saleType"), saleType))
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<OrderResponse> findOrdersBySaleTypePaginated(SaleType saleType, Pageable pageable) {
+        // Solution paginée
+        return orderRepository.findAll((root, query, cb) ->
+                        cb.equal(root.get("saleType"), saleType), pageable)
+                .map(this::convertToResponse);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package tn.fst.spring.projet_spring.services.interfaces;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import tn.fst.spring.projet_spring.dto.order.OrderRequest;
 import tn.fst.spring.projet_spring.dto.order.OrderResponse;
 import tn.fst.spring.projet_spring.model.order.OrderStatus;
@@ -19,4 +21,6 @@ public interface IOrderService {
     List<OrderResponse> findOrdersBySaleType(SaleType saleType);
     List<OrderResponse> findOrdersByDateRange(LocalDateTime start, LocalDateTime end);
     List<OrderResponse> findOrdersByUserAndDateRange(Long userId, LocalDateTime start, LocalDateTime end);
+    List<OrderResponse> findOrdersBySaleTypeOptimized(SaleType saleType);
+    Page<OrderResponse> findOrdersBySaleTypePaginated(SaleType saleType, Pageable pageable);
 }
