@@ -88,6 +88,33 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/products/extract-barcode").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/products/extract-product").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
 
+
+                        // Orders endpoints - secure for customers vs admins
+                        .requestMatchers(HttpMethod.GET, "/api/orders").hasAnyRole("ADMIN", "CUSTOMER","DELIVERY_MANAGER", "EVENT_MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAnyRole("ADMIN", "CUSTOMER","DELIVERY_MANAGER", "EVENT_MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAnyRole("ADMIN", "CUSTOMER","EVENT_MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/cancel").hasAnyRole("ADMIN", "CUSTOMER","EVENT_MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasAnyRole("ADMIN","DELIVERY_MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
+
+                        // Payments endpoints - secure for customers vs admins
+                        .requestMatchers(HttpMethod.GET, "/api/payments").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/payments/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/payments").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/payments/**").hasRole("ADMIN")
+
+                        // Invoices endpoints - secure for customers vs admins
+                            .requestMatchers(HttpMethod.GET, "/api/invoices").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/invoices/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/invoices/generate/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/invoices").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/invoices/search").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/invoices/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/invoices/**").hasRole("ADMIN")
+
+                        // Statistics endpoints - admin only
+                        .requestMatchers("/api/statistics/**").hasRole("ADMIN")
+
                         // Utilisateur connecté
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()

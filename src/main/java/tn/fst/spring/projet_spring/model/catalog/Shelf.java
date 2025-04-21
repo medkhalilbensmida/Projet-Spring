@@ -30,9 +30,10 @@ import java.util.HashSet;
         @Column
         private int y;
 
-        @Column
+        @Column(columnDefinition = "integer default 1")
         private int width; // largeur du rayon
-        @Column
+
+        @Column(columnDefinition = "integer default 1")
         private int height; // hauteur du rayon
 
         public Shelf(String name, String type, int x, int y, int width, int height) {

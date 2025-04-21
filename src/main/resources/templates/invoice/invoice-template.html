@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Facture</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        .header {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .company-info {
+            float: left;
+        }
+        .invoice-details {
+            float: right;
+            text-align: right;
+        }
+        .customer-info {
+            margin-top: 40px;
+            clear: both;
+        }
+        .customer-info div {
+            margin-bottom: 3px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 40px;
+            clear: both;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #f8f9fa;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .total-row {
+            font-weight: bold;
+        }
+        .notes {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #eee;
+            background-color: #f9f9f9;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+        .clearfix:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        .payment-info {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="header clearfix">
+    <div class="company-info">
+        <h2>Consommi Tounsi</h2>
+        <div>123 Rue du Commerce</div>
+        <div>75000 Tunis, Tunisie</div>
+        <div>Email: contact@consommi-tounsi.tn</div>
+        <div>Tél: +33 1 23 45 67 89</div>
+    </div>
+    <div class="invoice-details">
+        <h2>FACTURE</h2>
+        <div><strong>Numéro:</strong> <span th:text="${invoice.invoiceNumber}">INV-20230501-1234</span></div>
+        <div><strong>Date:</strong> <span th:text="${issueDateFormatted}">01/05/2023</span></div>
+        <div th:if="${dueDateFormatted}">
+            <strong>Échéance:</strong> <span th:text="${dueDateFormatted}">31/05/2023</span>
+        </div>
+    </div>
+</div>
+
+<div class="customer-info">
+    <h3>FACTURÉ À:</h3>
+    <div><strong th:text="${invoice.customerName}">Nom du Client</strong></div>
+    <div th:if="${invoice.customerEmail}" th:text="${invoice.customerEmail}">client@email.com</div>
+    <div th:if="${invoice.billingAddress}" th:text="${invoice.billingAddress}">123 rue Client, Ville</div>
+    <div th:if="${invoice.taxId}"><strong>N° TVA:</strong> <span th:text="${invoice.taxId}">FR12345678901</span></div>
+</div>
+
+<h1>DÉTAIL DE LA COMMANDE</h1>
+<div><strong>N° Commande:</strong> <span th:text="${invoice.orderNumber}">ORD-20230501-1234</span></div>
+
+<table>
+    <thead>
+    <tr>
+        <th>Produit</th>
+        <th>Quantité</th>
+        <th>Prix unitaire</th>
+        <th>Total</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="item : ${invoice.items}">
+        <td th:text="${item.productName}">Nom du produit</td>
+        <td th:text="${item.quantity}">1</td>
+        <td th:text="${#numbers.formatDecimal(item.unitPrice, 1, 2) + ' TND'}">100.00 TND</td>
+        <td th:text="${#numbers.formatDecimal(item.subtotal, 1, 2) + ' TND'}">100.00 TND</td>
+    </tr>
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="3" style="text-align: right;"><strong>Sous-total:</strong></td>
+        <td th:text="${#numbers.formatDecimal(invoice.amount, 1, 2) + ' TND'}">100.00 TND</td>
+    </tr>
+    <tr>
+        <td colspan="3" style="text-align: right;"><strong>TVA:</strong></td>
+        <td th:text="${#numbers.formatDecimal(invoice.taxAmount, 1, 2) + ' TND'}">20.00 TND</td>
+    </tr>
+    <tr class="total-row">
+        <td colspan="3" style="text-align: right;"><strong>TOTAL:</strong></td>
+        <td th:text="${#numbers.formatDecimal(invoice.totalWithTax, 1, 2) + ' TND'}">120.00 TND</td>
+    </tr>
+    </tfoot>
+</table>
+
+<div class="payment-info">
+    <h3>INFORMATIONS DE PAIEMENT</h3>
+    <div><strong>Statut:</strong> <span th:text="${invoice.paid ? 'Payée' : 'En attente de paiement'}">Payée</span></div>
+    <div th:if="${invoice.paymentMethod}"><strong>Méthode de paiement:</strong> <span th:text="${invoice.paymentMethod}">Carte de crédit</span></div>
+    <div th:if="${invoice.transactionId}"><strong>N° de transaction:</strong> <span th:text="${invoice.transactionId}">TXN-12345</span></div>
+</div>
+
+<div class="notes" th:if="${invoice.notes}">
+    <h3>NOTES</h3>
+    <p th:text="${invoice.notes}">Notes supplémentaires sur la facture...</p>
+</div>
+
+<div class="footer">
+    <p>Merci de votre achat!</p>
+    <p> Consommi Tounsi: 123 456 789 00012 - TVA: FR12345678901</p>
+</div>
+</body>
+</html>
