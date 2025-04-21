@@ -9,6 +9,7 @@ import java.util.List;
 
 @Repository
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
+
     // Find complaints by the user who placed the associated order
     List<Complaint> findByOrderUserId(Long userId);
     List<Complaint> findByOrderId(Long orderId);

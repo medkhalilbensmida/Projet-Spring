@@ -12,15 +12,21 @@ import tn.fst.spring.projet_spring.model.donation.Fundraiser;
 import tn.fst.spring.projet_spring.model.forum.Comment;
 import tn.fst.spring.projet_spring.model.forum.ForumTopic;
 import tn.fst.spring.projet_spring.model.forum.Rating;
+import tn.fst.spring.projet_spring.model.logistics.Livreur;
+import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
+import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
 import tn.fst.spring.projet_spring.model.order.*;
-import tn.fst.spring.projet_spring.model.logistics.*;
+import tn.fst.spring.projet_spring.model.payment.Payment;
+import tn.fst.spring.projet_spring.model.payment.PaymentMethod;
 import tn.fst.spring.projet_spring.repositories.auth.*;
+import tn.fst.spring.projet_spring.repositories.catalog.*;
 import tn.fst.spring.projet_spring.repositories.donation.CharityEventRepository;
 import tn.fst.spring.projet_spring.repositories.donation.DonationRepository;
 import tn.fst.spring.projet_spring.repositories.donation.FundraiserRepository;
 import tn.fst.spring.projet_spring.repositories.forum.CommentRepository;
 import tn.fst.spring.projet_spring.repositories.forum.ForumTopicRepository;
 import tn.fst.spring.projet_spring.repositories.forum.RatingRepository;
+
 import tn.fst.spring.projet_spring.repositories.products.*;
 import tn.fst.spring.projet_spring.repositories.order.*;
 import tn.fst.spring.projet_spring.repositories.logistics.*;
@@ -30,9 +36,9 @@ import tn.fst.spring.projet_spring.repositories.payment.PaymentRepository;
 import tn.fst.spring.projet_spring.model.payment.Payment;
 import tn.fst.spring.projet_spring.model.payment.PaymentMethod;
 
-import java.util.*;
+
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Configuration
@@ -52,18 +58,23 @@ public class DataInitializer {
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             DeliveryRequestRepository deliveryRequestRepository,
+            ComplaintRepository complaintRepository,
+            ResolutionRepository resolutionRepository,
+            PaymentRepository paymentRepository,
             ForumTopicRepository forumTopicRepository,
             RatingRepository ratingRepository,
             CommentRepository commentRepository,
             FundraiserRepository fundraiserRepository,
             CharityEventRepository charityEventRepository,
+
             DonationRepository donationRepository,
             ComplaintRepository complaintRepository,
             ResolutionRepository resolutionRepository,
             PaymentRepository paymentRepository
+
     ) {
         return args -> {
-            // 1. Initialisation des rôles
+            // 1. Roles
             insertRoleIfNotExist(roleRepository, "ROLE_ADMIN", "Administrateur principal");
             insertRoleIfNotExist(roleRepository, "ROLE_CUSTOMER", "Client consommateur");
             insertRoleIfNotExist(roleRepository, "ROLE_PRODUCT_MANAGER", "Responsable des produits");
@@ -71,6 +82,7 @@ public class DataInitializer {
             insertRoleIfNotExist(roleRepository, "ROLE_DELIVERY_MANAGER", "Responsable de livraison");
             insertRoleIfNotExist(roleRepository, "ROLE_EVENT_MANAGER", "Responsable caritatif");
 
+            // 2. Users
             insertUserIfNotExist(userRepository, "Ahmed Mhadhbi", "ahmed.mhadhbi@consummi.tn", "admin123", "ROLE_ADMIN", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Yasmine Ben Slimane", "yasmine.benslimane@mail.com", "customer123", "ROLE_CUSTOMER", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Fadi Abaidi", "fadi.abaidi@mail.com", "customer123", "ROLE_CUSTOMER", roleRepository, passwordEncoder);
@@ -84,18 +96,11 @@ public class DataInitializer {
             insertUserIfNotExist(userRepository, "Nadia Ferjani", "nadia.event@consummi.tn", "event123", "ROLE_EVENT_MANAGER", roleRepository, passwordEncoder);
             insertUserIfNotExist(userRepository, "Rami Gharbi", "rami.event@consummi.tn", "event123", "ROLE_EVENT_MANAGER", roleRepository, passwordEncoder);
 
-            // Ajout de plus d'utilisateurs pour les statistiques
             for (int i = 1; i <= 50; i++) {
-                insertUserIfNotExist(userRepository,
-                        "Client " + i,
-                        "client" + i + "@mail.com",
-                        "customer123",
-                        "ROLE_CUSTOMER",
-                        roleRepository,
-                        passwordEncoder);
+                insertUserIfNotExist(userRepository, "Client " + i, "client" + i + "@mail.com", "customer123", "ROLE_CUSTOMER", roleRepository, passwordEncoder);
             }
 
-            // 3. Initialisation des catégories
+            // 3. Categories
             insertCategoryIfNotExist(categoryRepository, "Alimentation", "Produits alimentaires tunisiens");
             insertCategoryIfNotExist(categoryRepository, "Artisanat", "Produits artisanaux tunisiens");
             insertCategoryIfNotExist(categoryRepository, "Cosmétique", "Produits cosmétiques naturels tunisiens");
@@ -105,7 +110,7 @@ public class DataInitializer {
             insertCategoryIfNotExist(categoryRepository, "Cuisine", "Ustensiles de cuisine traditionnelle");
             insertCategoryIfNotExist(categoryRepository, "Décoration", "Articles de décoration");
 
-            // 4. Initialisation des rayons
+            // 4. Shelves
             insertShelfIfNotExist(shelfRepository, "Rayon sec", "Normal", 0, 0, 3, 3);
             insertShelfIfNotExist(shelfRepository, "Rayon frais", "Réfrigéré", 3, 0, 3, 3);
             insertShelfIfNotExist(shelfRepository, "Rayon artisanal", "Normal", 0, 3, 3, 3);
@@ -114,10 +119,10 @@ public class DataInitializer {
             insertShelfIfNotExist(shelfRepository, "Rayon épicerie", "Normal", 3, 6, 3, 3);
             insertShelfIfNotExist(shelfRepository, "Rayon décoration", "Fragile", 6, 0, 3, 3);
 
-            // 5. Produits initiaux (fortement enrichi)
-            // Alimentation
+            // 5. Products (examples only, many more in real code)
             insertProduct("Huile d'olive Tunisienne", "6191234567890", "Huile extra vierge", 25.5, "Alimentation", 100, 10, "Rayon sec", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
             insertProduct("Dattes Deglet Nour", "6191234567891", "Dattes premium 500g", 18.0, "Alimentation", 150, 20, "Rayon sec", 0, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+
             insertProduct("Miel de thym", "6191234567892", "Miel naturel", 35.0, "Alimentation", 40, 8, "Rayon sec", 0, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
             insertProduct("Harissa", "6191234567893", "Pâte de piment 250g", 8.5, "Alimentation", 75, 15, "Rayon sec", 1, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
             insertProduct("Couscous fin", "6191234567894", "Couscous 1kg", 6.0, "Alimentation", 120, 30, "Rayon sec", 1, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
@@ -220,21 +225,19 @@ public class DataInitializer {
                     forumTopicRepository, userRepository
             );
 
+
+            // 6. Forum topics, ratings & comments
             insertForumTopic(
-                    "Où acheter de l'huile d'olive tunisienne de qualité ?",
-                    "Je cherche des adresses fiables pour acheter de l'huile d'olive tunisienne premium, des suggestions ?",
-                    2L,
-                    3.5,
-                    forumTopicRepository, userRepository
+                "Les meilleurs produits artisanaux tunisiens",
+                "Quels sont selon vous les produits artisanaux tunisiens les plus représentatifs de notre culture ?",
+                1L, 0, forumTopicRepository, userRepository
+            );
+            insertForumTopic(
+                "Où acheter de l'huile d'olive tunisienne de qualité ?",
+                "Je cherche des adresses fiables pour acheter de l'huile d'olive tunisienne premium, des suggestions ?",
+                2L, 3.5, forumTopicRepository, userRepository
             );
 
-            insertForumTopic(
-                    "Recettes traditionnelles avec des dattes tunisiennes",
-                    "Partagez vos recettes favorites utilisant les délicieuses dattes de Tunisie!",
-                    2L,
-                    4.0,
-                    forumTopicRepository, userRepository
-            );
 
             insertForumTopic(
                     "Promouvoir les produits du terroir tunisien à l'étranger",
@@ -268,41 +271,45 @@ public class DataInitializer {
 
 
             // Commentaires pour le topic "Huile d'olive tunisienne"
+
             insertCommentWithReactions(
-                    "L'huile d'olive de Tunisie est la meilleure au monde selon mon expérience !",
-                    2L, // topic huile d'olive
-                    1L, // auteur
-                    Set.of(2L, 3L), // utilisateurs qui like (ID 2 et 3)
-                    Set.of(4L),     // utilisateur qui dislike (ID 4)
-                    commentRepository, userRepository, forumTopicRepository
+                "L'huile d'olive de Tunisie est la meilleure au monde selon mon expérience !",
+                2L, 1L, Set.of(2L,3L), Set.of(4L),
+                commentRepository, userRepository, forumTopicRepository
             );
 
+
             // Commentaire 2 avec 3 likes et 0 dislike
+
             insertCommentWithReactions(
-                    "Pour les dattes, je recommande la variété Deglet Nour de Tozeur",
-                    3L, // topic dattes
-                    2L, // auteur
-                    Set.of(1L, 3L, 4L), // 3 likes
-                    Set.of(),           // pas de dislikes
-                    commentRepository, userRepository, forumTopicRepository
+                "Pour les dattes, je recommande la variété Deglet Nour de Tozeur",
+                3L, 2L, Set.of(1L,3L,4L), Set.of(),
+                commentRepository, userRepository, forumTopicRepository
             );
+
 
             //donations
 
-            initializeDonations(
-                    fundraiserRepository,
-                    charityEventRepository,
-                    donationRepository,
-                    userRepository,
-                    productRepository
+
+            // 8. Livreurs
+            Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", false,
+                36.83 + ThreadLocalRandom.current().nextDouble(0.01, 0.02),
+                10.15 + ThreadLocalRandom.current().nextDouble(0.01, 0.02)
             );
+            Livreur livreur2 = insertLivreurIfNotExist(livreurRepository, "Fatma Gharbi", false,
+                36.84 + ThreadLocalRandom.current().nextDouble(0.005, 0.015),
+                10.16 + ThreadLocalRandom.current().nextDouble(0.005, 0.015)
+            );
+
 
             // 6. Insertion des livreurs avec coordonnées
             Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", false, 36.83 + ThreadLocalRandom.current().nextDouble(0.01, 0.02), 10.15 + ThreadLocalRandom.current().nextDouble(0.01, 0.02));
             Livreur livreur2 = insertLivreurIfNotExist(livreurRepository, "Fatma Gharbi", false, 36.84 + ThreadLocalRandom.current().nextDouble(0.005, 0.015), 10.16 + ThreadLocalRandom.current().nextDouble(0.005, 0.015));
+
             insertLivreurIfNotExist(livreurRepository, "Samir Khelifi", true, 36.83 + ThreadLocalRandom.current().nextDouble(0.005, 0.01), 10.17 + ThreadLocalRandom.current().nextDouble(0.005, 0.01));
             insertLivreurIfNotExist(livreurRepository, "Hela Maatoug", true, 36.833833, 10.148004);
             insertLivreurIfNotExist(livreurRepository, "Karim Jouini", true, 36.835556, 10.142389);
+
 
             User customerFadi = userRepository.findByEmail("fadi.abaidi@mail.com").orElseThrow();
             User customerYasmine = userRepository.findByEmail("yasmine.benslimane@mail.com").orElseThrow();
@@ -339,6 +346,7 @@ public class DataInitializer {
                 if (!paymentRepository.findByOrderId(o.getId()).isPresent()) {
                     Payment p = new Payment();
                     p.setTransactionId("INIT-" + java.util.UUID.randomUUID().toString().substring(0,8).toUpperCase());
+
                     p.setPaymentMethod(PaymentMethod.CREDIT_CARD);
                     p.setAmount(o.getTotalAmount());
                     p.setPaymentDate(LocalDateTime.now());
@@ -349,9 +357,10 @@ public class DataInitializer {
                 }
             }
 
-            System.out.println("✅ Initialisation complète réussie avec des données enrichies pour les statistiques.");
+            System.out.println("✅ Initialisation complète réussie avec données de forum, dons, plaintes et paiements.");
         };
     }
+
 
     // Méthodes utilitaires
     private Product getRandomProduct(ProductRepository repo) {
@@ -764,4 +773,5 @@ public class DataInitializer {
             return null; // Or fetch and return the existing one if needed
         }
     }
+
 }

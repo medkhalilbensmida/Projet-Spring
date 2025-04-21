@@ -23,10 +23,13 @@ public interface IOrderService {
     List<OrderResponse> findOrdersByDateRange(LocalDateTime start, LocalDateTime end);
     List<OrderResponse> findOrdersByUserAndDateRange(Long userId, LocalDateTime start, LocalDateTime end);
 
+
+
     // Methods from HEAD
     OrderResponse cancelOrder(Long id);
     List<OrderResponse> findOrdersBySaleTypeOptimized(SaleType saleType);
     Page<OrderResponse> findOrdersBySaleTypePaginated(SaleType saleType, Pageable pageable);
+
 
     // Method from FAdi
     /**
@@ -40,4 +43,5 @@ public interface IOrderService {
      * @throws IllegalStateException if stock is insufficient for items to ship.
      */
     OrderResponse createExchangeOrder(Long originalOrderId, Long complaintId, List<OrderItemRequest> itemsToShip, String reason);
+
 }
