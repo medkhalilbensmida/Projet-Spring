@@ -1,6 +1,7 @@
 package tn.fst.spring.projet_spring.controllers.invoice;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,54 +41,36 @@ public class InvoiceController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Récupérer une facture par son ID")
-    public ResponseEntity<InvoiceResponse> getInvoiceById(@PathVariable Long id) {
-        return ResponseEntity.ok(invoiceService.getInvoiceById(id));
-    }
-
-    @GetMapping("/{id}/details")
-    @Operation(summary = "Récupérer les détails d'une facture par son ID")
-    public ResponseEntity<InvoiceDetailResponse> getInvoiceDetailsById(@PathVariable Long id) {
-        return ResponseEntity.ok(invoiceService.getInvoiceDetailsById(id));
+    @Operation(summary = "Récupérer une facture par son ID avec option détails")
+    public ResponseEntity<Object> getInvoiceById(
+            @PathVariable Long id,
+            @Parameter(description = "Inclure les détails complets de la facture")
+            @RequestParam(required = false, defaultValue = "false") boolean details) {
+        return ResponseEntity.ok(invoiceService.getInvoiceById(id, details));
     }
 
     @GetMapping("/number/{invoiceNumber}")
-    @Operation(summary = "Récupérer une facture par son numéro")
-    public ResponseEntity<InvoiceResponse> getInvoiceByNumber(@PathVariable String invoiceNumber) {
-        return ResponseEntity.ok(invoiceService.getInvoiceByNumber(invoiceNumber));
-    }
-
-    @GetMapping("/number/{invoiceNumber}/details")
-    @Operation(summary = "Récupérer les détails d'une facture par son numéro")
-    public ResponseEntity<InvoiceDetailResponse> getInvoiceDetailsByNumber(@PathVariable String invoiceNumber) {
-        return ResponseEntity.ok(invoiceService.getInvoiceDetailsByNumber(invoiceNumber));
+    @Operation(summary = "Récupérer une facture par son numéro avec option détails")
+    public ResponseEntity<Object> getInvoiceByNumber(
+            @PathVariable String invoiceNumber,
+            @Parameter(description = "Inclure les détails complets de la facture")
+            @RequestParam(required = false, defaultValue = "false") boolean details) {
+        return ResponseEntity.ok(invoiceService.getInvoiceByNumber(invoiceNumber, details));
     }
 
     @GetMapping
-    @Operation(summary = "Récupérer les factures avec filtres optionnels")
-    public ResponseEntity<List<InvoiceResponse>> getInvoices(
+    @Operation(summary = "Rechercher des factures avec filtres optionnels")
+    public ResponseEntity<List<InvoiceResponse>> searchInvoices(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) InvoiceType type,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) Boolean isPaid,
+            @RequestParam(required = false) String invoiceNumber,
+            @RequestParam(required = false) String orderNumber) {
 
-        if (userId != null && type != null) {
-            return ResponseEntity.ok(invoiceService.getInvoicesByTypeAndUser(type, userId));
-        } else if (userId != null) {
-            return ResponseEntity.ok(invoiceService.getInvoicesByUser(userId));
-        } else if (type != null) {
-            return ResponseEntity.ok(invoiceService.getInvoicesByType(type));
-        } else if (startDate != null && endDate != null) {
-            return ResponseEntity.ok(invoiceService.getInvoicesByDateRange(startDate, endDate));
-        } else {
-            return ResponseEntity.ok(invoiceService.getAllInvoices());
-        }
-    }
-
-    @PostMapping("/search")
-    @Operation(summary = "Recherche avancée de factures")
-    public ResponseEntity<List<InvoiceResponse>> searchInvoices(@RequestBody InvoiceSearchRequest searchRequest) {
-        return ResponseEntity.ok(invoiceService.searchInvoices(searchRequest));
+        return ResponseEntity.ok(invoiceService.searchInvoices(
+                userId, type, startDate, endDate, isPaid, invoiceNumber, orderNumber));
     }
 
     @GetMapping("/{id}/pdf")

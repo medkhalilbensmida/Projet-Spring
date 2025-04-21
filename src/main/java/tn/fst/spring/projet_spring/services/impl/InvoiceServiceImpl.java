@@ -8,7 +8,6 @@ import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.invoice.InvoiceDetailResponse;
 import tn.fst.spring.projet_spring.dto.invoice.InvoiceRequest;
 import tn.fst.spring.projet_spring.dto.invoice.InvoiceResponse;
-import tn.fst.spring.projet_spring.dto.invoice.InvoiceSearchRequest;
 import tn.fst.spring.projet_spring.dto.order.OrderItemResponse;
 import tn.fst.spring.projet_spring.model.auth.User;
 import tn.fst.spring.projet_spring.model.invoice.Invoice;
@@ -155,27 +154,27 @@ public class InvoiceServiceImpl implements IInvoiceService {
     }
 
     @Override
-    public InvoiceResponse getInvoiceById(Long id) {
+    public Object getInvoiceById(Long id, boolean details) {
         Invoice invoice = findAndCheckAccess(id);
-        return convertToResponse(invoice);
+        return details ? convertToDetailResponse(invoice) : convertToResponse(invoice);
     }
-
-    @Override
-    public InvoiceDetailResponse getInvoiceDetailsById(Long id) {
+   @Override
+   public InvoiceDetailResponse getInvoiceDetailsById(Long id) {
         Invoice invoice = findAndCheckAccess(id);
         return convertToDetailResponse(invoice);
     }
 
     @Override
-    public InvoiceResponse getInvoiceByNumber(String invoiceNumber) {
+    public Object getInvoiceByNumber(String invoiceNumber, boolean details) {
         Invoice invoice = invoiceRepository.findByInvoiceNumber(invoiceNumber)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Facture non trouvée"));
 
         // Vérifier les permissions d'accès
         checkInvoiceAccess(invoice);
 
-        return convertToResponse(invoice);
+        return details ? convertToDetailResponse(invoice) : convertToResponse(invoice);
     }
+
 
     @Override
     public InvoiceDetailResponse getInvoiceDetailsByNumber(String invoiceNumber) {
@@ -277,77 +276,84 @@ public class InvoiceServiceImpl implements IInvoiceService {
     }
 
     @Override
-    public List<InvoiceResponse> searchInvoices(InvoiceSearchRequest searchRequest) {
-        // Ici, nous pourrions utiliser Specification ou Query by Example pour des recherches complexes
-        // Pour cet exemple, nous allons utiliser une approche plus simple
+    public List<InvoiceResponse> searchInvoices(
+            Long userId,
+            InvoiceType type,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Boolean isPaid,
+            String invoiceNumber,
+            String orderNumber) {
 
-        // Si l'utilisateur spécifie son ID
-        if (searchRequest.getUserId() != null) {
-            // Vérification des permissions
-            if (!securityUtil.isAdmin()) {
-                User currentUser = securityUtil.getCurrentUser();
-                if (!currentUser.getId().equals(searchRequest.getUserId())) {
-                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                            "Vous n'êtes pas autorisé à accéder aux factures d'autres utilisateurs");
-                }
-            }
-
-            // Si le numéro de facture est spécifié
-            if (searchRequest.getInvoiceNumber() != null) {
-                return invoiceRepository.findByInvoiceNumber(searchRequest.getInvoiceNumber())
-                        .filter(i -> i.getOrder().getUser().getId().equals(searchRequest.getUserId()))
-                        .map(this::convertToResponse)
-                        .map(List::of)
-                        .orElse(List.of());
-            }
-
-            // Si le type est spécifié
-            if (searchRequest.getType() != null) {
-                return getInvoicesByTypeAndUser(searchRequest.getType(), searchRequest.getUserId());
-            }
-
-            // Si les dates sont spécifiées
-            if (searchRequest.getStartDate() != null && searchRequest.getEndDate() != null) {
-                return invoiceRepository.findByIssueDateBetweenAndOrderUserId(
-                                searchRequest.getStartDate(),
-                                searchRequest.getEndDate(),
-                                searchRequest.getUserId())
-                        .stream()
-                        .map(this::convertToResponse)
-                        .collect(Collectors.toList());
-            }
-
-            // Par défaut, retourne toutes les factures de l'utilisateur
-            return getInvoicesByUser(searchRequest.getUserId());
-        }
-
-        // Si l'admin fait une recherche sans spécifier d'utilisateur
-        if (securityUtil.isAdmin()) {
-            // Si le numéro de facture est spécifié
-            if (searchRequest.getInvoiceNumber() != null) {
-                return invoiceRepository.findByInvoiceNumber(searchRequest.getInvoiceNumber())
-                        .map(this::convertToResponse)
-                        .map(List::of)
-                        .orElse(List.of());
-            }
-
-            // Si le type est spécifié
-            if (searchRequest.getType() != null) {
-                return getInvoicesByType(searchRequest.getType());
-            }
-
-            // Si les dates sont spécifiées
-            if (searchRequest.getStartDate() != null && searchRequest.getEndDate() != null) {
-                return getInvoicesByDateRange(searchRequest.getStartDate(), searchRequest.getEndDate());
-            }
-
-            // Par défaut, retourne toutes les factures
-            return getAllInvoices();
-        } else {
-            // Un utilisateur normal doit spécifier son ID ou rien (ses propres factures par défaut)
+        // Vérification des permissions pour les recherches avec userId
+        if (userId != null && !securityUtil.isAdmin()) {
             User currentUser = securityUtil.getCurrentUser();
-            return getInvoicesByUser(currentUser.getId());
+            if (!currentUser.getId().equals(userId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Vous n'êtes pas autorisé à accéder aux factures d'autres utilisateurs");
+            }
         }
+
+        // Si recherche par numéro de facture (priorité la plus haute)
+        if (invoiceNumber != null) {
+            return invoiceRepository.findByInvoiceNumber(invoiceNumber)
+                    .map(this::convertToResponse)
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+
+        // Si recherche par numéro de commande
+        if (orderNumber != null) {
+            return invoiceRepository.findByOrderOrderNumber(orderNumber) 
+            .flatMap(order -> invoiceRepository.findByOrderId(order.getId()))
+                    .map(this::convertToResponse)
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+
+
+        // Construction d'une recherche avec les filtres disponibles
+        List<Invoice> invoices;
+
+        if (userId != null && type != null) {
+            invoices = invoiceRepository.findByTypeAndOrderUserId(type, userId);
+        } else if (userId != null) {
+            invoices = invoiceRepository.findByOrderUserId(userId);
+        } else if (type != null) {
+            if (securityUtil.isAdmin()) {
+                invoices = invoiceRepository.findByType(type);
+            } else {
+                User currentUser = securityUtil.getCurrentUser();
+                invoices = invoiceRepository.findByTypeAndOrderUserId(type, currentUser.getId());
+            }
+        } else if (startDate != null && endDate != null) {
+            if (securityUtil.isAdmin()) {
+                invoices = invoiceRepository.findByIssueDateBetween(startDate, endDate);
+            } else {
+                User currentUser = securityUtil.getCurrentUser();
+                invoices = invoiceRepository.findByIssueDateBetweenAndOrderUserId(
+                        startDate, endDate, currentUser.getId());
+            }
+        } else {
+            // Pas de filtres spécifiques
+            if (securityUtil.isAdmin()) {
+                invoices = invoiceRepository.findAll();
+            } else {
+                User currentUser = securityUtil.getCurrentUser();
+                invoices = invoiceRepository.findByOrderUserId(currentUser.getId());
+            }
+        }
+
+        // Filtre additionnel pour isPaid (si spécifié)
+        if (isPaid != null) {
+            invoices = invoices.stream()
+                    .filter(invoice -> invoice.isPaid() == isPaid)
+                    .collect(Collectors.toList());
+        }
+
+        return invoices.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -399,16 +405,15 @@ public class InvoiceServiceImpl implements IInvoiceService {
         invoice.setActive(false);
         invoiceRepository.save(invoice);
 
-        // Ou pour une suppression physique (décommenter) :
-        // Supprimer la référence dans la commande
-        /*
+        
+        
         Order order = invoice.getOrder();
         order.setInvoice(null);
         orderRepository.save(order);
 
         // Supprimer la facture
         invoiceRepository.delete(invoice);
-        */
+        
     }
 
     // Méthodes utilitaires
