@@ -313,6 +313,54 @@ public class OrderServiceImpl implements IOrderService {
         return convertToResponse(updatedOrder);
     }
 
+    @Override
+    @Transactional
+    public OrderResponse createExchangeOrder(Long originalOrderId, Long complaintId, List<OrderItemRequest> itemsToShip, String reason) {
+        Order originalOrder = orderRepository.findById(originalOrderId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Original order not found with id: " + originalOrderId));
+        User user = originalOrder.getUser();
+
+        Order exchangeOrder = new Order();
+        exchangeOrder.setUser(user);
+        exchangeOrder.setOrderDate(LocalDateTime.now());
+        exchangeOrder.setStatus(OrderStatus.PROCESSING); // Start as processing
+        exchangeOrder.setOrderNumber(generateOrderNumber());
+        exchangeOrder.setSaleType(SaleType.ONLINE); // Exchanges are typically online/internal
+        exchangeOrder.setCustomerAddress(originalOrder.getCustomerAddress()); // Use original address
+        exchangeOrder.setCustomerPhone(originalOrder.getCustomerPhone());
+        exchangeOrder.setSalespersonNote("Exchange for order " + originalOrder.getOrderNumber() + ". Complaint ID: " + complaintId + ". Reason: " + reason);
+
+        if (itemsToShip == null || itemsToShip.isEmpty()) {
+            throw new IllegalStateException("List of items to ship for exchange cannot be empty.");
+        }
+
+        for (OrderItemRequest itemRequest : itemsToShip) {
+            Product product = productRepository.findById(itemRequest.getProductId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found with id: " + itemRequest.getProductId()));
+            Stock stock = product.getStock();
+            if (stock == null) {
+                throw new IllegalStateException("Stock record missing for product: " + product.getName());
+            }
+            if (stock.getQuantity() < itemRequest.getQuantity()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Not enough stock for exchange item: " + product.getName() + ". Requested: " + itemRequest.getQuantity() + ", Available: " + stock.getQuantity());
+            }
+            // Decrease stock for the item being sent out in the exchange
+            stock.updateQuantity(-itemRequest.getQuantity());
+            stockRepository.save(stock);
+
+            OrderItem exchangeItem = new OrderItem();
+            exchangeItem.setOrder(exchangeOrder);
+            exchangeItem.setProduct(product);
+            exchangeItem.setQuantity(itemRequest.getQuantity());
+            exchangeItem.setUnitPrice(0.0); // Exchanges typically have zero price for the items
+            exchangeOrder.getItems().add(exchangeItem);
+        }
+
+        exchangeOrder.calculateTotal(); // Total should be 0.0 for exchange items
+        Order savedExchangeOrder = orderRepository.save(exchangeOrder);
+        return convertToResponse(savedExchangeOrder);
+    }
+
     private String generateOrderNumber() {
         // Combinaison des deux méthodes de génération
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");

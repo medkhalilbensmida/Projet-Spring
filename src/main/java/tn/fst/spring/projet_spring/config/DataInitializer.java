@@ -24,6 +24,11 @@ import tn.fst.spring.projet_spring.repositories.forum.RatingRepository;
 import tn.fst.spring.projet_spring.repositories.products.*;
 import tn.fst.spring.projet_spring.repositories.order.*;
 import tn.fst.spring.projet_spring.repositories.logistics.*;
+import tn.fst.spring.projet_spring.repositories.logistics.ComplaintRepository;
+import tn.fst.spring.projet_spring.repositories.logistics.ResolutionRepository;
+import tn.fst.spring.projet_spring.repositories.payment.PaymentRepository;
+import tn.fst.spring.projet_spring.model.payment.Payment;
+import tn.fst.spring.projet_spring.model.payment.PaymentMethod;
 
 import java.util.*;
 import java.time.LocalDateTime;
@@ -50,7 +55,13 @@ public class DataInitializer {
             ForumTopicRepository forumTopicRepository,
             RatingRepository ratingRepository,
             CommentRepository commentRepository,
-            FundraiserRepository fundraiserRepository, CharityEventRepository charityEventRepository, DonationRepository donationRepository) {
+            FundraiserRepository fundraiserRepository,
+            CharityEventRepository charityEventRepository,
+            DonationRepository donationRepository,
+            ComplaintRepository complaintRepository,
+            ResolutionRepository resolutionRepository,
+            PaymentRepository paymentRepository
+    ) {
         return args -> {
             // 1. Initialisation des rôles
             insertRoleIfNotExist(roleRepository, "ROLE_ADMIN", "Administrateur principal");
@@ -199,7 +210,8 @@ public class DataInitializer {
             insertProduct("Tableau tissé", "6198901234574", "Tableau traditionnel", 95.0, "Décoration", 12, 2, "Rayon décoration", 2, 1, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
             insertProduct("Lanterne en fer", "6198901234575", "Lanterne décorative", 55.0, "Décoration", 22, 4, "Rayon décoration", 2, 2, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
             insertProduct("Plateau à bijoux", "6198901234576", "Plateau en céramique", 45.0, "Décoration", 25, 5, "Rayon décoration", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
-//forumTopic
+
+            //forumTopic
             insertForumTopic(
                     "Les meilleurs produits artisanaux tunisiens",
                     "Quels sont selon vous les produits artisanaux tunisiens les plus représentatifs de notre culture ?",
@@ -231,7 +243,7 @@ public class DataInitializer {
                     4.8,
                     forumTopicRepository, userRepository
             );
-//Rating
+            //Rating
             insertRating(
                     3.5,
                     1L,
@@ -252,10 +264,10 @@ public class DataInitializer {
                     4L,    // topic sur la promotion internationale
                     ratingRepository, userRepository, forumTopicRepository
             );
-//comments
+            //comments
 
 
-// Commentaires pour le topic "Huile d'olive tunisienne"
+            // Commentaires pour le topic "Huile d'olive tunisienne"
             insertCommentWithReactions(
                     "L'huile d'olive de Tunisie est la meilleure au monde selon mon expérience !",
                     2L, // topic huile d'olive
@@ -265,7 +277,7 @@ public class DataInitializer {
                     commentRepository, userRepository, forumTopicRepository
             );
 
-// Commentaire 2 avec 3 likes et 0 dislike
+            // Commentaire 2 avec 3 likes et 0 dislike
             insertCommentWithReactions(
                     "Pour les dattes, je recommande la variété Deglet Nour de Tozeur",
                     3L, // topic dattes
@@ -275,7 +287,7 @@ public class DataInitializer {
                     commentRepository, userRepository, forumTopicRepository
             );
 
-//donations
+            //donations
 
             initializeDonations(
                     fundraiserRepository,
@@ -284,15 +296,6 @@ public class DataInitializer {
                     userRepository,
                     productRepository
             );
-
-
-
-
-
-
-
-
-
 
             // 6. Insertion des livreurs avec coordonnées
             Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", false, 36.83 + ThreadLocalRandom.current().nextDouble(0.01, 0.02), 10.15 + ThreadLocalRandom.current().nextDouble(0.01, 0.02));
@@ -303,6 +306,7 @@ public class DataInitializer {
 
             User customerFadi = userRepository.findByEmail("fadi.abaidi@mail.com").orElseThrow();
             User customerYasmine = userRepository.findByEmail("yasmine.benslimane@mail.com").orElseThrow();
+            User customerHedi = userRepository.findByEmail("hedi.aissi@mail.com").orElseThrow();
             Product huileOlive = productRepository.findByBarcode("6191234567890").orElseThrow();
             Product dattes = productRepository.findByBarcode("6192345678901").orElseThrow();
 
@@ -310,21 +314,40 @@ public class DataInitializer {
             Order order1 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 2, "ORD001");
             createDeliveryRequest(deliveryRequestRepository, order1, livreur1, DeliveryStatus.DELIVERED, 5.0, 36.8008, 10.1815); // Tunis Centre
 
-            Order order2 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 1, "ORD002");
+            Order order2 = createOrder(orderRepository, orderItemRepository, customerYasmine, huileOlive, 1, "ORD002");
             createDeliveryRequest(deliveryRequestRepository, order2, livreur1, DeliveryStatus.DELIVERED, 5.0, 36.8454, 10.1941); // La Marsa
 
-            Order order3 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 3, "ORD003");
+            Order order3 = createOrder(orderRepository, orderItemRepository, customerHedi, huileOlive, 3, "ORD003");
             createDeliveryRequest(deliveryRequestRepository, order3, livreur2, DeliveryStatus.IN_TRANSIT, 6.0, 36.7948, 10.1007); // Manouba
 
             Order order4 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 1, "ORD004");
             createDeliveryRequest(deliveryRequestRepository, order4, livreur1, DeliveryStatus.ASSIGNED, 5.0, 36.8665, 10.1647); // Ariana
 
-            Order order5 = createOrder(orderRepository, orderItemRepository, customerFadi, huileOlive, 2, "ORD005");
+            Order order5 = createOrder(orderRepository, orderItemRepository, customerYasmine, huileOlive, 2, "ORD005");
             createDeliveryRequest(deliveryRequestRepository, order5, livreur2, DeliveryStatus.DELIVERED, 6.0, 36.8028, 10.1797); // Lac 1
 
-            Order order6 = createOrder(orderRepository, orderItemRepository, customerYasmine, dattes, 5, "ORD006");
+            Order order6 = createOrder(orderRepository, orderItemRepository, customerFadi, dattes, 5, "ORD006");
             createUnassignedDeliveryRequest(deliveryRequestRepository, order6, 7.5, 36.8550, 10.1850);
 
+            createComplaintIfNotExist(complaintRepository, customerFadi, order1, "L'huile d'olive a fui pendant la livraison.");
+            createComplaintIfNotExist(complaintRepository, customerYasmine, order6, "Les dattes reçues ne semblent pas fraîches.");
+            Complaint complaint3 = createComplaintIfNotExist(complaintRepository, customerHedi, order5, "Commande marquée livrée mais jamais reçue."); // Example using Hedi
+
+            // -- Seed initial payments for orders --
+            java.util.List<Order> seededOrders = java.util.Arrays.asList(order1, order2, order3, order4, order5, order6);
+            for (Order o : seededOrders) {
+                if (!paymentRepository.findByOrderId(o.getId()).isPresent()) {
+                    Payment p = new Payment();
+                    p.setTransactionId("INIT-" + java.util.UUID.randomUUID().toString().substring(0,8).toUpperCase());
+                    p.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+                    p.setAmount(o.getTotalAmount());
+                    p.setPaymentDate(LocalDateTime.now());
+                    p.setOrder(o);
+                    p.setSuccessful(true);
+                    paymentRepository.save(p);
+                    System.out.println("Initial payment created for order " + o.getOrderNumber());
+                }
+            }
 
             System.out.println("✅ Initialisation complète réussie avec des données enrichies pour les statistiques.");
         };
@@ -721,7 +744,24 @@ public class DataInitializer {
         fundraiser.addContribution(product.getPrice() * quantity);
     }
 
+    private Complaint createComplaintIfNotExist(ComplaintRepository complaintRepo, User user, Order order, String description) {
+        // Simple check based on user, order, and description to avoid duplicates during testing restarts
+        boolean exists = complaintRepo.findAll().stream()
+                .anyMatch(c -> c.getOrder().getUser().getId().equals(user.getId()) &&
+                               c.getOrder().getId().equals(order.getId()) &&
+                               c.getDescription().equals(description));
 
-
-
+        if (!exists) {
+            Complaint complaint = new Complaint();
+            complaint.setOrder(order);
+            complaint.setDescription(description);
+            complaint.setStatus(ComplaintStatus.OPEN);
+            Complaint savedComplaint = complaintRepo.save(complaint);
+            System.out.println("Plainte créée pour la commande " + order.getOrderNumber() + " par " + user.getUsername());
+            return savedComplaint;
+        } else {
+            System.out.println("Plainte déjà existante pour la commande " + order.getOrderNumber() + " par " + user.getUsername() + " avec la même description.");
+            return null; // Or fetch and return the existing one if needed
+        }
+    }
 }
