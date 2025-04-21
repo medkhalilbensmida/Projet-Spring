@@ -3,6 +3,7 @@ package tn.fst.spring.projet_spring.dto.forum;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Null;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,6 +17,4 @@ public class RatingDTO {
 
     @NotNull
     private Long topicId;
-    @NotNull
-    private Long userId;
 }

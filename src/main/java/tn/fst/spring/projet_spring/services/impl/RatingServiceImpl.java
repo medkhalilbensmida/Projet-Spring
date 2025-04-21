@@ -10,6 +10,7 @@ import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.repositories.forum.ForumTopicRepository;
 import tn.fst.spring.projet_spring.repositories.forum.RatingRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IRatingService;
+import tn.fst.spring.projet_spring.services.utils.SecurityUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +25,7 @@ public class RatingServiceImpl implements IRatingService {
 
     @Override
     public RatingDTO createRating(RatingDTO request) {
-        User user =userRepository.findById(request.getUserId()).orElseThrow(()->new RuntimeException("user not found"));
-        ForumTopic topic=topicRepository.findById(request.getTopicId()).orElseThrow(()-> new RuntimeException("topic not found"));
+        User user = SecurityUtils.getCurrentUser(userRepository);        ForumTopic topic=topicRepository.findById(request.getTopicId()).orElseThrow(()-> new RuntimeException("topic not found"));
         Rating rating=new Rating();
         rating.setUser(user);
         rating.setTopic(topic);
@@ -75,7 +75,6 @@ public class RatingServiceImpl implements IRatingService {
 
     private RatingDTO mapToResponseDTO(Rating rating) {
         return RatingDTO.builder()
-                .userId(rating.getUser().getId())
                 .topicId(rating.getTopic().getId())
                 .rating(rating.getRating())
                 .build();

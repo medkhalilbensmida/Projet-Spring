@@ -6,9 +6,21 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import tn.fst.spring.projet_spring.model.auth.*;
 import tn.fst.spring.projet_spring.model.catalog.*;
+import tn.fst.spring.projet_spring.model.donation.CharityEvent;
+import tn.fst.spring.projet_spring.model.donation.Donation;
+import tn.fst.spring.projet_spring.model.donation.Fundraiser;
+import tn.fst.spring.projet_spring.model.forum.Comment;
+import tn.fst.spring.projet_spring.model.forum.ForumTopic;
+import tn.fst.spring.projet_spring.model.forum.Rating;
 import tn.fst.spring.projet_spring.model.order.*;
 import tn.fst.spring.projet_spring.model.logistics.*;
 import tn.fst.spring.projet_spring.repositories.auth.*;
+import tn.fst.spring.projet_spring.repositories.donation.CharityEventRepository;
+import tn.fst.spring.projet_spring.repositories.donation.DonationRepository;
+import tn.fst.spring.projet_spring.repositories.donation.FundraiserRepository;
+import tn.fst.spring.projet_spring.repositories.forum.CommentRepository;
+import tn.fst.spring.projet_spring.repositories.forum.ForumTopicRepository;
+import tn.fst.spring.projet_spring.repositories.forum.RatingRepository;
 import tn.fst.spring.projet_spring.repositories.products.*;
 import tn.fst.spring.projet_spring.repositories.order.*;
 import tn.fst.spring.projet_spring.repositories.logistics.*;
@@ -33,8 +45,11 @@ public class DataInitializer {
             LivreurRepository livreurRepository,
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
-            DeliveryRequestRepository deliveryRequestRepository
-    ) {
+            DeliveryRequestRepository deliveryRequestRepository,
+            ForumTopicRepository forumTopicRepository,
+            RatingRepository ratingRepository,
+            CommentRepository commentRepository,
+            FundraiserRepository fundraiserRepository, CharityEventRepository charityEventRepository, DonationRepository donationRepository) {
 
         return args -> {
             insertRoleIfNotExist(roleRepository, "ROLE_ADMIN", "Administrateur principal");
@@ -107,6 +122,100 @@ public class DataInitializer {
 // Epicerie
             insertProduct("Pâtes d'amande", "6197891234567", "Pâtes artisanales", 28.0, 0.4, "Epicerie", 30, 6, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
             insertProduct("Fruits secs", "6197892345678", "Mélange premium", 32.0, 0.5, "Epicerie", 45, 9, "Rayon épicerie", 0, 0, categoryRepository, shelfRepository, productRepository, stockRepository, productPositionRepository);
+//forumTopic
+            insertForumTopic(
+                    "Les meilleurs produits artisanaux tunisiens",
+                    "Quels sont selon vous les produits artisanaux tunisiens les plus représentatifs de notre culture ?",
+                    1L,
+                    0,
+                    forumTopicRepository, userRepository
+            );
+
+            insertForumTopic(
+                    "Où acheter de l'huile d'olive tunisienne de qualité ?",
+                    "Je cherche des adresses fiables pour acheter de l'huile d'olive tunisienne premium, des suggestions ?",
+                    2L,
+                    3.5,
+                    forumTopicRepository, userRepository
+            );
+
+            insertForumTopic(
+                    "Recettes traditionnelles avec des dattes tunisiennes",
+                    "Partagez vos recettes favorites utilisant les délicieuses dattes de Tunisie!",
+                    2L,
+                    4.0,
+                    forumTopicRepository, userRepository
+            );
+
+            insertForumTopic(
+                    "Promouvoir les produits du terroir tunisien à l'étranger",
+                    "Comment mieux faire connaître nos produits typiquement tunisiens sur les marchés internationaux ?",
+                    3L,
+                    4.8,
+                    forumTopicRepository, userRepository
+            );
+//Rating
+            insertRating(
+                    3.5,
+                    1L,
+                    2L,    // topic sur l'huile d'olive
+                    ratingRepository, userRepository, forumTopicRepository
+            );
+
+            insertRating(
+                    4.0,
+                    3L,    // nouvel utilisateur
+                    3L,    // topic sur les dattes
+                    ratingRepository, userRepository, forumTopicRepository
+            );
+
+            insertRating(
+                    4.8,
+                    2L,
+                    4L,    // topic sur la promotion internationale
+                    ratingRepository, userRepository, forumTopicRepository
+            );
+//comments
+
+
+// Commentaires pour le topic "Huile d'olive tunisienne"
+            insertCommentWithReactions(
+                    "L'huile d'olive de Tunisie est la meilleure au monde selon mon expérience !",
+                    2L, // topic huile d'olive
+                    1L, // auteur
+                    Set.of(2L, 3L), // utilisateurs qui like (ID 2 et 3)
+                    Set.of(4L),     // utilisateur qui dislike (ID 4)
+                    commentRepository, userRepository, forumTopicRepository
+            );
+
+// Commentaire 2 avec 3 likes et 0 dislike
+            insertCommentWithReactions(
+                    "Pour les dattes, je recommande la variété Deglet Nour de Tozeur",
+                    3L, // topic dattes
+                    2L, // auteur
+                    Set.of(1L, 3L, 4L), // 3 likes
+                    Set.of(),           // pas de dislikes
+                    commentRepository, userRepository, forumTopicRepository
+            );
+
+//donations
+
+            initializeDonations(
+                    fundraiserRepository,
+                    charityEventRepository,
+                    donationRepository,
+                    userRepository,
+                    productRepository
+            );
+
+
+
+
+
+
+
+
+
 
             // 6. Insertion des livreurs avec coordonnées
             Livreur livreur1 = insertLivreurIfNotExist(livreurRepository, "Ahmed Ben Ali", false, 36.83 + ThreadLocalRandom.current().nextDouble(0.01, 0.02), 10.15 + ThreadLocalRandom.current().nextDouble(0.01, 0.02));
@@ -338,5 +447,184 @@ public class DataInitializer {
             System.out.println("Demande de livraison UNASSIGNED pour la commande " + order.getOrderNumber() + " créée avec succès.");
         });
     }
+
+    public void insertForumTopic(
+            String title,
+            String content,
+            Long authorId,
+            double rating,
+            ForumTopicRepository forumTopicRepository,UserRepository userRepository
+    ) {
+        User user =userRepository.findById(authorId).orElseThrow(() -> new RuntimeException("User not found"));
+        ForumTopic topic = new ForumTopic();
+        topic.setTitle(title);
+        topic.setContent(content);
+        topic.setAuthor(user);
+        topic.setRating(rating);
+        topic.setCreatedAt(LocalDateTime.now());
+
+        forumTopicRepository.save(topic);
+    }
+    public void insertRating(Double ratingValue, Long userId, Long topicId,
+                      RatingRepository ratingRepository,
+                      UserRepository userRepository,
+                      ForumTopicRepository forumTopicRepository) {
+
+        Rating rating = new Rating();
+        rating.setRating(ratingValue);
+
+        // Supposons que vous avez des méthodes pour récupérer user et topic
+        User user = userRepository.findById(userId).orElseThrow();
+        ForumTopic topic = forumTopicRepository.findById(topicId).orElseThrow();
+
+        rating.setUser(user);
+        rating.setTopic(topic);
+        rating.setCreatedAt(LocalDateTime.now());
+
+        ratingRepository.save(rating);
+    }
+    public void insertCommentWithReactions(
+            String content, Long topicId, Long authorId,
+            Set<Long> likedByUserIds, Set<Long> dislikedByUserIds,
+            CommentRepository commentRepository,
+            UserRepository userRepository,
+            ForumTopicRepository forumTopicRepository) {
+
+        Comment comment = new Comment();
+        comment.setContent(content);
+
+        ForumTopic topic = forumTopicRepository.findById(topicId).orElseThrow();
+        User author = userRepository.findById(authorId).orElseThrow();
+
+        comment.setTopic(topic);
+        comment.setAuthor(author);
+        comment.setCreatedAt(LocalDateTime.now());
+
+        // Gestion des likes
+        Set<User> likingUsers = new HashSet<>();
+        for (Long userId : likedByUserIds) {
+            likingUsers.add(userRepository.findById(userId).orElseThrow());
+        }
+        comment.setLikedBy(likingUsers);
+        comment.setLikes(likingUsers.size());
+
+        // Gestion des dislikes
+        Set<User> dislikingUsers = new HashSet<>();
+        for (Long userId : dislikedByUserIds) {
+            dislikingUsers.add(userRepository.findById(userId).orElseThrow());
+        }
+        comment.setDislikedBy(dislikingUsers);
+        comment.setDislikes(dislikingUsers.size());
+
+        commentRepository.save(comment);
+    }
+
+
+    public void initializeDonations(
+            FundraiserRepository fundraiserRepository,
+            CharityEventRepository charityEventRepository,
+            DonationRepository donationRepository,
+            UserRepository userRepository,
+            ProductRepository productRepository) {
+
+        // 1. Initialiser les Fundraisers
+        Fundraiser fundraiser1 = createFundraiser(
+                "Aide aux agriculteurs tunisiens",
+                "Soutien aux producteurs d'huile d'olive",
+                50000.0,
+                fundraiserRepository
+        );
+
+        Fundraiser fundraiser2 = createFundraiser(
+                "Éducation en zones rurales",
+                "Fourniture de matériel scolaire",
+                30000.0,
+                fundraiserRepository
+        );
+
+        // 2. Initialiser les Events
+        CharityEvent event1 = createCharityEvent(
+                "Gala de l'huile d'olive",
+                "Sfax",
+                LocalDateTime.now().plusDays(30),
+                "Soirée de collecte",
+                fundraiser1,
+                charityEventRepository
+        );
+
+        CharityEvent event2 = createCharityEvent(
+                "Distribution scolaire",
+                "Kairouan",
+                LocalDateTime.now().plusDays(45),
+                "Journée de distribution",
+                fundraiser2,
+                charityEventRepository
+        );
+
+        // 3. Initialiser les Donations
+        createDonation(
+                productRepository.findById(1L).orElseThrow(), // Huile d'olive
+                userRepository.findById(1L).orElseThrow(),   // User 1
+                event1,
+                10,                                         // 10 unités
+                donationRepository,
+                fundraiser1
+        );
+
+        createDonation(
+                productRepository.findById(3L).orElseThrow(), // Dattes
+                userRepository.findById(2L).orElseThrow(),    // User 2
+                event1,
+                15,
+                donationRepository,
+                fundraiser1
+        );
+
+        createDonation(
+                productRepository.findById(5L).orElseThrow(), // Cahiers
+                userRepository.findById(3L).orElseThrow(),    // User 3
+                event2,
+                100,
+                donationRepository,
+                fundraiser2
+        );
+    }
+
+    // Méthodes helper
+    private Fundraiser createFundraiser(String title, String desc, double target, FundraiserRepository repo) {
+        Fundraiser f = new Fundraiser();
+        f.setTitle(title);
+        f.setDescription(desc);
+        f.setTargetAmount(target);
+        f.setCollectedAmount(0.0);
+        return repo.save(f);
+    }
+
+    private CharityEvent createCharityEvent(String name, String location, LocalDateTime date,
+                                            String desc, Fundraiser fundraiser, CharityEventRepository repo) {
+        CharityEvent e = new CharityEvent();
+        e.setName(name);
+        e.setLocation(location);
+        e.setEventDate(date);
+        e.setDescription(desc);
+        e.setFundraiser(fundraiser);
+        return repo.save(e);
+    }
+
+    private void createDonation(Product product, User donor, CharityEvent event,
+                                int quantity, DonationRepository repo, Fundraiser fundraiser) {
+        Donation d = new Donation();
+        d.setProduct(product);
+        d.setDonor(donor);
+        d.setEvent(event);
+        d.setQuantity(quantity);
+        repo.save(d);
+
+        // Mise à jour du montant collecté (supposant que product.getPrice() existe)
+        fundraiser.addContribution(product.getPrice() * quantity);
+    }
+
+
+
 
 }
