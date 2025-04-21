@@ -100,7 +100,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/invoices/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/invoices/**").hasRole("ADMIN")
 
-
+                        // Statistics endpoints - admin only
+                        .requestMatchers("/api/statistics/**").hasRole("ADMIN")
 
                         // Utilisateur connecté
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
