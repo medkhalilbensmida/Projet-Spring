@@ -49,10 +49,8 @@ public class ComplaintServiceImpl implements IComplaintService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + auth.getName()));
         Order order = orderRepository.findById(complaintRequest.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + complaintRequest.getOrderId()));
-
         // Ensure the order belongs to the current user
         if (!order.getUser().getId().equals(user.getId())) {
-
             throw new IllegalStateException("Cannot file a complaint on an order that is not yours.");
         }
         // Prevent filing more than one complaint for this order
