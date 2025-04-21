@@ -24,7 +24,14 @@ public interface IOrderService {
     List<OrderResponse> findOrdersByUserAndDateRange(Long userId, LocalDateTime start, LocalDateTime end);
 
 
-    // --- New Method for Exchange ---
+
+    // Methods from HEAD
+    OrderResponse cancelOrder(Long id);
+    List<OrderResponse> findOrdersBySaleTypeOptimized(SaleType saleType);
+    Page<OrderResponse> findOrdersBySaleTypePaginated(SaleType saleType, Pageable pageable);
+
+
+    // Method from FAdi
     /**
      * Creates a new order representing an exchange based on an original order and complaint.
      * @param originalOrderId The ID of the order that led to the complaint.
@@ -32,14 +39,9 @@ public interface IOrderService {
      * @param itemsToShip List of items (product ID and quantity) to be shipped in the exchange.
      * @param reason Description/reason for the exchange.
      * @return OrderResponse for the newly created exchange order.
-     * @throws ResourceNotFoundException if original order, user, or products are not found.
+     * @throws tn.fst.spring.projet_spring.exception.ResourceNotFoundException if original order, user, or products are not found.
      * @throws IllegalStateException if stock is insufficient for items to ship.
      */
     OrderResponse createExchangeOrder(Long originalOrderId, Long complaintId, List<OrderItemRequest> itemsToShip, String reason);
-
-    OrderResponse cancelOrder(Long id);
-
-    List<OrderResponse> findOrdersBySaleTypeOptimized(SaleType saleType);
-    Page<OrderResponse> findOrdersBySaleTypePaginated(SaleType saleType, Pageable pageable);
 
 }

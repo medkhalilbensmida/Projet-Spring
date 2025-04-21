@@ -15,4 +15,3 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findByOrderId(Long orderId);
     List<Complaint> findByStatus(ComplaintStatus status);
 }
-

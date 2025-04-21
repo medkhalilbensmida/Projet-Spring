@@ -13,6 +13,8 @@ import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
 
 import tn.fst.spring.projet_spring.model.auth.User;
 
+import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
+
 import tn.fst.spring.projet_spring.model.order.Order;
 import tn.fst.spring.projet_spring.model.order.OrderStatus;
 import tn.fst.spring.projet_spring.model.order.SaleType;
