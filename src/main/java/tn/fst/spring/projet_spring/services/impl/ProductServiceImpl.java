@@ -54,7 +54,7 @@ public class ProductServiceImpl implements IProductService {
 
         if (productRepository.findByBarcode(productRequest.getBarcode()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    " Le code-barres '" + productRequest.getBarcode() + "' est déjà utilisé par un autre produit.");
+                    " Le code-barres ' " + productRequest.getBarcode() + " ' est déjà utilisé par un autre produit.");
         }
 
         Category category = categoryRepository.findByName(productRequest.getCategoryName())
@@ -220,4 +220,6 @@ public class ProductServiceImpl implements IProductService {
 
         return convertToResponse(product);
     }
+
+
 }
