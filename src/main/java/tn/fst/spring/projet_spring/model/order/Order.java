@@ -8,7 +8,7 @@ import lombok.ToString;
 import tn.fst.spring.projet_spring.model.auth.User;
 import tn.fst.spring.projet_spring.model.logistics.Complaint;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
-import tn.fst.spring.projet_spring.model.payment.Invoice;
+import tn.fst.spring.projet_spring.model.invoice.Invoice;
 import tn.fst.spring.projet_spring.model.payment.Payment;
 
 import java.time.LocalDateTime;
@@ -29,7 +29,7 @@ public class Order {
     @Column(nullable = false, unique = true)
     private String orderNumber;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -58,7 +58,7 @@ public class Order {
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private Invoice invoice;
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "order", orphanRemoval = true)
     private DeliveryRequest deliveryRequest;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
@@ -100,5 +100,13 @@ public class Order {
         if (payment != null && payment.isSuccessful()) {
             this.status = OrderStatus.CONFIRMED;
         }
+    }
+    // Add this method to the Order class
+
+    /**
+     * Cancels the order and updates its status
+     */
+    public void cancel() {
+        this.status = OrderStatus.CANCELLED;
     }
 }

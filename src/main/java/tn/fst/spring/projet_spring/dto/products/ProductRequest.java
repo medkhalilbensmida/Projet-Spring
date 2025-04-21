@@ -16,6 +16,10 @@ public class ProductRequest {
     @Positive
     private double price;
 
+    @NotNull(message = "Product weight must not be null, default is 0")
+    @PositiveOrZero(message = "Product weight must be zero or positive")
+    private Double weight = 0.0;
+
     @NotBlank
     private String categoryName;
 

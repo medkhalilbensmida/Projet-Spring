@@ -15,5 +15,5 @@ public interface ShelfRepository extends JpaRepository<Shelf, Long> {
     List<Shelf> findByType(String type);
     List<Shelf> findByXAndY(int x, int y);
     List<Shelf> findByXBetweenAndYBetween(int x1, int x2, int y1, int y2);
-    List<Shelf> findByName(String name);
+    Optional<Shelf> findByName(String name);
 }

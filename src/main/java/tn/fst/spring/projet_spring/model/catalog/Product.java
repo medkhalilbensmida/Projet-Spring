@@ -11,6 +11,9 @@ import tn.fst.spring.projet_spring.model.order.OrderItem;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @author claudia
+ */
 
 @Getter
 @Setter
@@ -31,12 +34,14 @@ public class Product {
     @Column(unique = true)
     private String barcode;
 
+    private double weight; // Weight in kilograms
+
     private String description;
 
     @Column(nullable = false)
     private double price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
@@ -55,5 +60,13 @@ public class Product {
 
     public boolean validateBarcode() {
         return barcode != null && barcode.matches("^\\d{12,13}$");
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 }
