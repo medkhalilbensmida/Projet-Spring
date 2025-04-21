@@ -1,6 +1,8 @@
 package tn.fst.spring.projet_spring.services.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,7 +38,6 @@ public class OrderServiceImpl implements IOrderService {
     private final ProductRepository productRepository;
     private final StockRepository stockRepository;
     private final SecurityUtil securityUtil;
-
 
     @Override
     @Transactional
@@ -116,9 +118,6 @@ public class OrderServiceImpl implements IOrderService {
         return convertToResponse(order);
     }
 
-
-
-
     @Override
     public OrderResponse getOrderByNumber(String orderNumber) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
@@ -129,7 +128,6 @@ public class OrderServiceImpl implements IOrderService {
 
         return convertToResponse(order);
     }
-
 
     @Override
     public List<OrderResponse> getOrdersByUser(Long userId) {
@@ -161,7 +159,6 @@ public class OrderServiceImpl implements IOrderService {
                 .collect(Collectors.toList());
     }
 
-
     @Override
     @Transactional
     public OrderResponse updateOrderStatus(Long id, OrderStatus status) {
@@ -180,7 +177,6 @@ public class OrderServiceImpl implements IOrderService {
         Order updatedOrder = orderRepository.save(order);
         return convertToResponse(updatedOrder);
     }
-
 
     @Override
     @Transactional
@@ -206,7 +202,6 @@ public class OrderServiceImpl implements IOrderService {
         orderRepository.delete(order);
     }
 
-
     @Override
     public List<OrderResponse> findOrdersBySaleType(SaleType saleType) {
         if (securityUtil.isAdmin()) {
@@ -221,6 +216,24 @@ public class OrderServiceImpl implements IOrderService {
                     .map(this::convertToResponse)
                     .collect(Collectors.toList());
         }
+    }
+
+    @Override
+    public List<OrderResponse> findOrdersBySaleTypeOptimized(SaleType saleType) {
+        // Solution optimisée avec spécifications JPA
+        return orderRepository.findAll((root, query, cb) ->
+                        cb.equal(root.get("saleType"), saleType))
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<OrderResponse> findOrdersBySaleTypePaginated(SaleType saleType, Pageable pageable) {
+        // Solution paginée
+        return orderRepository.findAll((root, query, cb) ->
+                        cb.equal(root.get("saleType"), saleType), pageable)
+                .map(this::convertToResponse);
     }
 
     @Override
@@ -257,7 +270,6 @@ public class OrderServiceImpl implements IOrderService {
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
-
 
     @Override
     @Transactional
@@ -301,11 +313,11 @@ public class OrderServiceImpl implements IOrderService {
         return convertToResponse(updatedOrder);
     }
 
-
     private String generateOrderNumber() {
+        // Combinaison des deux méthodes de génération
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String datePart = LocalDateTime.now().format(formatter);
-        String randomPart = String.format("%04d", new Random().nextInt(10000));
+        String randomPart = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         return "ORD-" + datePart + "-" + randomPart;
     }
 
@@ -339,6 +351,4 @@ public class OrderServiceImpl implements IOrderService {
                 .salespersonNote(order.getSalespersonNote())
                 .build();
     }
-
-
 }

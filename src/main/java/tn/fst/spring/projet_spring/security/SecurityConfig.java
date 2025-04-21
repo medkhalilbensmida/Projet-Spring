@@ -77,6 +77,18 @@ public class SecurityConfig {
                         // WebSocket: autoriser l'accès sans JWT
                         .requestMatchers("/ws/**").permitAll()
 
+                        //Statistiques : utilisateurs + produits + stock
+                        .requestMatchers(HttpMethod.GET, "/api/stats/users").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/stats/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/stats/inventory").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/stats/barcode").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+
+                        // Statistiques avancées : utilisateurs + produits + stock
+                        .requestMatchers(HttpMethod.GET, "/api/advanced-stats/user-behavior").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/advanced-stats/product-performance").hasAnyRole("ADMIN", "PRODUCT_MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/advanced-stats/donation-analytics").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/advanced-stats/delivery-analytics").hasAnyRole("ADMIN", "DELIVERY_MANAGER")
+
                         // Produits
                         .requestMatchers(HttpMethod.GET, "/api/products").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/products/*").hasAnyRole("ADMIN", "PRODUCT_MANAGER", "CUSTOMER")

@@ -13,6 +13,7 @@ import tn.fst.spring.projet_spring.repositories.donation.CharityEventRepository;
 import tn.fst.spring.projet_spring.repositories.donation.DonationRepository;
 import tn.fst.spring.projet_spring.repositories.products.ProductRepository;
 import tn.fst.spring.projet_spring.services.interfaces.IDonationService;
+import tn.fst.spring.projet_spring.services.utils.SecurityUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,8 +30,7 @@ public class DonationServiceImpl implements IDonationService {
     @Override
     public DonationResponseDTO createDonation(DonationRequestDTO dto) {
         Product product = productRepository.findById(dto.getProductId()).orElseThrow();
-        User donor = userRepository.findById(dto.getDonorId()).orElseThrow();
-
+        User donor = SecurityUtils.getCurrentUser(userRepository);
         Donation donation = new Donation();
         donation.setProduct(product);
         donation.setQuantity(dto.getQuantity());

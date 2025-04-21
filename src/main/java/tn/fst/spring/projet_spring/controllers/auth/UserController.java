@@ -7,10 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import tn.fst.spring.projet_spring.dto.auth.UserDto;
-import tn.fst.spring.projet_spring.dto.auth.UserAdminUpdateDto;
-import tn.fst.spring.projet_spring.dto.auth.UpdateUserRoleRequest;
-import tn.fst.spring.projet_spring.dto.auth.UserProfileUpdateDto;
+import tn.fst.spring.projet_spring.dto.auth.*;
 import tn.fst.spring.projet_spring.services.interfaces.IUserService;
 
 import java.util.List;
@@ -59,8 +56,10 @@ public class UserController {
     @Operation(summary = "Mettre à jour le rôle d'un utilisateur (admin seulement)")
     @PutMapping("/update-role")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> updateUserRole(@RequestBody UpdateUserRoleRequest request) {
+    public ResponseEntity<ApiResponse> updateUserRole(
+            @RequestBody UpdateUserRoleRequest request) {
         userService.updateUserRole(request.getUserId(), request.getRoleName());
-        return ResponseEntity.ok("Rôle mis à jour avec succès");
+        return ResponseEntity
+                .ok(new ApiResponse("Rôle mis à jour avec succès"));
     }
 }

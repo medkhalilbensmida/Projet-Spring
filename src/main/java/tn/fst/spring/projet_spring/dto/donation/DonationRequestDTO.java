@@ -6,6 +6,5 @@ import lombok.Data;
 public class DonationRequestDTO {
     private Long productId;
     private int quantity;
-    private Long donorId;
     private Long eventId; // peut être null
 }
