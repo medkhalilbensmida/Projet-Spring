@@ -20,8 +20,6 @@ public interface IPaymentService {
     List<PaymentResponse> getPaymentsByStatus(boolean successful);
     void deletePayment(Long id);
 
-
-
     // --- New Method for Refund ---
     /**
      * Initiates a refund for a specific order.
@@ -34,4 +32,3 @@ public interface IPaymentService {
      */
     void initiateRefund(Long orderId, Double amount, String reason);
 }
-

@@ -8,13 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import tn.fst.spring.projet_spring.dto.payment.PaymentRequest;
 import tn.fst.spring.projet_spring.dto.payment.PaymentResponse;
-
-import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
-
 import tn.fst.spring.projet_spring.model.auth.User;
-
 import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
-
 import tn.fst.spring.projet_spring.model.order.Order;
 import tn.fst.spring.projet_spring.model.order.OrderStatus;
 import tn.fst.spring.projet_spring.model.order.SaleType;
@@ -31,12 +26,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class PaymentServiceImpl implements IPaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
