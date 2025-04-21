@@ -1,6 +1,7 @@
 package tn.fst.spring.projet_spring.services.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,12 +11,14 @@ import tn.fst.spring.projet_spring.dto.payment.PaymentResponse;
 import tn.fst.spring.projet_spring.model.auth.User;
 import tn.fst.spring.projet_spring.model.order.Order;
 import tn.fst.spring.projet_spring.model.order.OrderStatus;
+import tn.fst.spring.projet_spring.model.order.SaleType;
 import tn.fst.spring.projet_spring.model.payment.Payment;
 import tn.fst.spring.projet_spring.model.payment.PaymentMethod;
 import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.repositories.order.OrderRepository;
 import tn.fst.spring.projet_spring.repositories.payment.PaymentRepository;
 import tn.fst.spring.projet_spring.security.SecurityUtil;
+import tn.fst.spring.projet_spring.services.interfaces.IInvoiceService;
 import tn.fst.spring.projet_spring.services.interfaces.IPaymentService;
 
 import java.time.LocalDateTime;
@@ -23,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements IPaymentService {
@@ -30,6 +34,7 @@ public class PaymentServiceImpl implements IPaymentService {
     private final OrderRepository orderRepository;
     private final SecurityUtil securityUtil;
     private final UserRepository userRepository;
+    private final IInvoiceService invoiceService;
 
 
     @Override
@@ -80,12 +85,22 @@ public class PaymentServiceImpl implements IPaymentService {
         payment.setNotes(paymentRequest.getNotes());
         payment.setSuccessful(true);
 
-        // Save payment and update order in a single transaction
         Payment savedPayment = paymentRepository.save(payment);
 
-        // Sync with order using the attachPayment method
+        // Sync with order
         order.attachPayment(savedPayment);
         orderRepository.save(order);
+
+        // Generate invoice automatically for online orders
+        if (order.getSaleType() == SaleType.ONLINE) {
+            try {
+                invoiceService.generateInvoiceForOrder(order.getId());
+            } catch (Exception e) {
+                // Log the error but don't fail the payment
+                log.error("Failed to generate invoice for order {}: {}",
+                        order.getOrderNumber(), e.getMessage());
+            }
+        }
 
         return convertToResponse(savedPayment);
     }

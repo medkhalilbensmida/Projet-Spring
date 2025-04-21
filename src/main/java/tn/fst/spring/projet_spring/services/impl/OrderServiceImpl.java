@@ -351,4 +351,12 @@ public class OrderServiceImpl implements IOrderService {
                 .salespersonNote(order.getSalespersonNote())
                 .build();
     }
+    private boolean needsAutomaticInvoice(Order order) {
+        return order.getSaleType() == SaleType.ONLINE &&
+                order.getStatus() == OrderStatus.CONFIRMED &&
+                order.getPayment() != null &&
+                order.getPayment().isSuccessful() &&
+                order.getInvoice() == null;
+    }
+
 }
