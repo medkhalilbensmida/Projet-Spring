@@ -1,6 +1,7 @@
 package tn.fst.spring.projet_spring.services.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import tn.fst.spring.projet_spring.model.invoice.Invoice;
 import tn.fst.spring.projet_spring.model.invoice.InvoiceType;
 import tn.fst.spring.projet_spring.model.order.Order;
 import tn.fst.spring.projet_spring.model.order.OrderItem;
+import tn.fst.spring.projet_spring.model.order.OrderStatus;
 import tn.fst.spring.projet_spring.model.payment.Payment;
 import tn.fst.spring.projet_spring.repositories.auth.UserRepository;
 import tn.fst.spring.projet_spring.repositories.invoice.InvoiceRepository;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InvoiceServiceImpl implements IInvoiceService {
@@ -41,56 +44,51 @@ public class InvoiceServiceImpl implements IInvoiceService {
     @Override
     @Transactional
     public InvoiceResponse generateInvoiceForOrder(Long orderId) {
-        // Vérifier si une facture existe déjà pour cette commande
+        // Check if invoice already exists
         if (invoiceRepository.existsByOrderId(orderId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Une facture existe déjà pour cette commande");
+            log.warn("Invoice already exists for order {}", orderId);
+            return invoiceRepository.findByOrderId(orderId)
+                    .map(this::convertToResponse)
+                    .orElseThrow();
         }
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Commande non trouvée"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Order not found"));
 
-        // Vérification des permissions : seul un admin ou le propriétaire peut générer une facture
-        if (!securityUtil.isAdmin()) {
-            User currentUser = securityUtil.getCurrentUser();
-            if (!order.getUser().getId().equals(currentUser.getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Vous n'êtes pas autorisé à générer une facture pour cette commande");
-            }
+        // Validate order status
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Cannot generate invoice for unconfirmed order");
         }
 
-        // Vérification du paiement
+        // Validate payment
         if (order.getPayment() == null || !order.getPayment().isSuccessful()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "La commande doit être payée avant de générer une facture");
+                    "Cannot generate invoice for unpaid order");
         }
 
-        // Création de la facture
+        // Create invoice
         Invoice invoice = new Invoice();
         invoice.setOrder(order);
         invoice.setInvoiceNumber(generateInvoiceNumber());
         invoice.setIssueDate(LocalDateTime.now());
         invoice.setAmount(order.getTotalAmount());
-        invoice.setPaid(true); // Déjà payée pour les commandes en ligne
+        invoice.setPaid(true);
         invoice.setType(InvoiceType.ONLINE);
+        invoice.setBillingAddress(order.getCustomerAddress());
+        invoice.setShippingAddress(order.getCustomerAddress());
+        invoice.setDueDate(LocalDateTime.now()); // Due date is same as issue date for paid invoices
 
-        // Adresse de facturation = adresse du client si disponible
-        if (order.getCustomerAddress() != null) {
-            invoice.setBillingAddress(order.getCustomerAddress());
-            invoice.setShippingAddress(order.getCustomerAddress());
-        }
-
-        // Date d'échéance = date d'émission pour les factures déjà payées
-        invoice.setDueDate(invoice.getIssueDate());
-
-        // Calcul de la TVA (exemple: 20%)
+        // Calculate VAT (20%)
         double taxRate = 0.20;
         double taxAmount = Math.round(order.getTotalAmount() * taxRate * 100) / 100.0;
         invoice.setTaxAmount(taxAmount);
 
+        // Save invoice
         Invoice savedInvoice = invoiceRepository.save(invoice);
 
-        // Mettre à jour la relation avec la commande
+        // Update order
         order.setInvoice(savedInvoice);
         orderRepository.save(order);
 
