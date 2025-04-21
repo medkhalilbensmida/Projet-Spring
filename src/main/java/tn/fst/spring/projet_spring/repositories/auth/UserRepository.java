@@ -2,6 +2,7 @@ package tn.fst.spring.projet_spring.repositories.auth;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import tn.fst.spring.projet_spring.model.auth.User;
 
 import java.time.LocalDateTime;
@@ -131,5 +132,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
         }
         return map;
     }
+    // Dans UserRepository.java
+    @Query("SELECT u FROM User u WHERE u.isActive = true")
+    List<User> findByIsActiveTrue();
 
+    @Query("SELECT COUNT(u) FROM User u WHERE u.updatedAt >= :date")
+    long countActiveSince(@Param("date") LocalDateTime date);
 }
