@@ -590,18 +590,36 @@ public class DataInitializer {
                       UserRepository userRepository,
                       ForumTopicRepository forumTopicRepository) {
 
-        Rating rating = new Rating();
-        rating.setRating(ratingValue);
+        // Check if rating already exists
+        Optional<Rating> existingRating = ratingRepository.findByTopicIdAndUserId(topicId, userId);
+        if (existingRating.isPresent()) {
+            System.out.println("[DataInitializer] Rating already exists for topic " + topicId + " and user " + userId + ". Skipping insertion.");
+            return; // Skip if rating already exists
+        } else {
+             System.out.println("[DataInitializer] No existing rating found for topic " + topicId + " and user " + userId + ". Proceeding with insertion.");
+        }
 
-        // Supposons que vous avez des méthodes pour récupérer user et topic
-        User user = userRepository.findById(userId).orElseThrow();
-        ForumTopic topic = forumTopicRepository.findById(topicId).orElseThrow();
+        // Proceed with insertion if not found
+        Optional<User> userOptional = userRepository.findById(userId);
+        Optional<ForumTopic> topicOptional = forumTopicRepository.findById(topicId);
 
-        rating.setUser(user);
-        rating.setTopic(topic);
-        rating.setCreatedAt(LocalDateTime.now());
-
-        ratingRepository.save(rating);
+        if (userOptional.isPresent() && topicOptional.isPresent()) {
+            System.out.println("[DataInitializer] Attempting to save rating for topic " + topicId + " and user " + userId);
+            Rating rating = new Rating();
+            rating.setRating(ratingValue);
+            rating.setUser(userOptional.get());
+            rating.setTopic(topicOptional.get());
+            rating.setCreatedAt(LocalDateTime.now());
+            ratingRepository.save(rating); // This line causes the error
+            System.out.println("[DataInitializer] Successfully saved rating for topic " + topicId + " and user " + userId);
+        } else {
+            if (!userOptional.isPresent()) {
+                System.out.println("[DataInitializer] User with ID " + userId + " not found for rating.");
+            }
+            if (!topicOptional.isPresent()) {
+                System.out.println("[DataInitializer] Topic with ID " + topicId + " not found for rating.");
+            }
+        }
     }
     public void insertCommentWithReactions(
             String content, Long topicId, Long authorId,

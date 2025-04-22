@@ -7,6 +7,7 @@ import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryStatusDTO;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IDeliveryRequestService {
     /**
@@ -64,4 +65,13 @@ public interface IDeliveryRequestService {
     List<DeliveryRequestDTO> getAllDeliveryRequests(DeliveryStatus status, Long livreurId, Long orderId);
 
     DeliveryRequestDTO assignLivreurManually(Long deliveryRequestId, Long livreurId);
+
+    /**
+     * Geocodes an address string into latitude and longitude using Nominatim (OpenStreetMap).
+     *
+     * @param address The address string to geocode.
+     * @return A Map containing "latitude" and "longitude" doubles.
+     * @throws GeocodingException if the address cannot be geocoded or an error occurs.
+     */
+    Map<String, Double> getCoordinatesFromAddress(String address);
 }

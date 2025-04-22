@@ -1,16 +1,22 @@
 package tn.fst.spring.projet_spring.services.logistics;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 import tn.fst.spring.projet_spring.config.ShippingProperties;
 import tn.fst.spring.projet_spring.dto.logistics.CreateDeliveryRequestDTO;
 import tn.fst.spring.projet_spring.dto.logistics.DeliveryRequestDTO;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryDestinationDTO;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryStatusDTO;
 import tn.fst.spring.projet_spring.exception.DeliveryAlreadyAssignedException;
+import tn.fst.spring.projet_spring.exception.GeocodingException;
 import tn.fst.spring.projet_spring.exception.ResourceNotFoundException;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryRequest;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
@@ -21,11 +27,10 @@ import tn.fst.spring.projet_spring.repositories.logistics.LivreurRepository;
 import tn.fst.spring.projet_spring.repositories.order.OrderRepository;
 
 import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +43,10 @@ public class DeliveryRequestServiceImpl implements IDeliveryRequestService {
     private final LivreurRepository livreurRepository;
     private final ShippingProperties shippingProperties;
     private final DistanceCalculationService distanceCalculationService;
+    private final WebClient webClient;
+
+    private static final String NOMINATIM_API_URL = "https://nominatim.openstreetmap.org";
+    private static final String NOMINATIM_USER_AGENT = "YourAppName/1.0 (your-contact-email@example.com)";
 
     @Override
     @Transactional
@@ -521,34 +530,85 @@ public class DeliveryRequestServiceImpl implements IDeliveryRequestService {
             );
         }
         
-        // Can only assign to PENDING requests typically
+        // Check if delivery status is PENDING
         if (deliveryRequest.getStatus() != DeliveryStatus.PENDING) {
-            throw new IllegalStateException(
-                String.format("DeliveryRequest %d has status %s and cannot be manually assigned. Only PENDING requests are eligible.", 
-                              deliveryRequestId, deliveryRequest.getStatus())
-            );
+            throw new IllegalStateException("Delivery request " + deliveryRequestId + " is not in PENDING state. Current status: " + deliveryRequest.getStatus());
         }
 
-
-        // 4. Check if Livreur is available
+        // Check if livreur is available
         if (!livreur.isDisponible()) {
-            throw new IllegalStateException("Livreur with ID " + livreurId + " is not available for assignment.");
+            throw new IllegalStateException("Livreur " + livreurId + " is not available.");
         }
 
-        // 5. Perform assignment
+        // 4. Perform assignment
         deliveryRequest.setLivreur(livreur);
         deliveryRequest.setStatus(DeliveryStatus.ASSIGNED);
         
-        // 6. Mark Livreur as unavailable
+        // 5. Mark Livreur as unavailable
         livreur.setDisponible(false);
         
-        // 7. Save changes
+        // 6. Save changes
         livreurRepository.save(livreur);
         DeliveryRequest savedRequest = deliveryRequestRepository.save(deliveryRequest);
 
         log.info("Successfully assigned Livreur {} to DeliveryRequest {} and updated status to ASSIGNED.", livreurId, deliveryRequestId);
 
-        // 8. Return DTO
+        // 7. Return DTO
         return mapToDTO(savedRequest);
+    }
+
+    @Override
+    public Map<String, Double> getCoordinatesFromAddress(String address) {
+        if (address == null || address.trim().isEmpty()) {
+            throw new GeocodingException("Address cannot be empty.");
+        }
+
+        String encodedAddress;
+        try {
+            encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8.toString());
+        } catch (Exception e) {
+            log.error("Failed to URL encode address: {}", address, e);
+            throw new GeocodingException("Failed to encode address for geocoding", e);
+        }
+
+        String uri = String.format("/search?q=%s&format=jsonv2&limit=1&addressdetails=0", encodedAddress);
+        log.info("Calling Nominatim API: {}{}", NOMINATIM_API_URL, uri);
+
+        try {
+            Mono<JsonNode> responseMono = webClient.get()
+                    .uri(NOMINATIM_API_URL + uri)
+                    .header("User-Agent", NOMINATIM_USER_AGENT) // Set User-Agent
+                    .retrieve() // Throws WebClientResponseException for 4xx/5xx
+                    .bodyToMono(JsonNode.class)
+                    .timeout(Duration.ofSeconds(10)); // Add a timeout
+
+            JsonNode response = responseMono.block(); // Block for simplicity
+
+            if (response != null && response.isArray() && response.size() > 0) {
+                JsonNode result = response.get(0);
+                if (result.has("lat") && result.has("lon")) {
+                    double lat = result.get("lat").asDouble();
+                    double lon = result.get("lon").asDouble();
+                    log.info("Geocoding successful for address '{}': Lat={}, Lon={}", address, lat, lon);
+                    Map<String, Double> coordinates = new HashMap<>();
+                    coordinates.put("latitude", lat);
+                    coordinates.put("longitude", lon);
+                    return coordinates;
+                } else {
+                    log.warn("Nominatim response for address '{}' missing 'lat' or 'lon': {}", address, result);
+                    throw new GeocodingException("Geocoding failed: Coordinates missing in Nominatim response for address: " + address);
+                }
+            } else {
+                log.warn("Nominatim returned no results for address '{}'. Response: {}", address, response);
+                throw new GeocodingException("Geocoding failed: No results found for address: " + address);
+            }
+        } catch (WebClientResponseException e) {
+            log.error("Nominatim API error for address '{}': Status {}, Body {}", address, e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new GeocodingException("Geocoding failed: Nominatim API returned error " + e.getStatusCode(), e);
+        } catch (Exception e) {
+            log.error("Error during geocoding call for address '{}': {}", address, e.getMessage(), e);
+            // Catch other potential errors (timeout, parsing, etc.)
+            throw new GeocodingException("Geocoding failed: An unexpected error occurred: " + e.getMessage(), e);
+        }
     }
 }
