@@ -19,6 +19,7 @@ import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryDestinationDTO;
 import tn.fst.spring.projet_spring.dto.logistics.UpdateDeliveryStatusDTO;
 import tn.fst.spring.projet_spring.model.logistics.DeliveryStatus;
 import lombok.extern.slf4j.Slf4j;
+import tn.fst.spring.projet_spring.exception.GeocodingException;
 
 import java.net.URI;
 import java.util.List;
@@ -251,6 +252,43 @@ public class DeliveryRequestController {
             log.error("Unexpected error during manual assignment for DR {} and Livreur {}", deliveryRequestId, livreurId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "An unexpected error occurred during manual assignment."));
+        }
+    }
+
+    @Operation(summary = "Geocode an address",
+               description = "Converts a street address into latitude and longitude coordinates using Nominatim (OpenStreetMap).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Geocoding successful, coordinates returned"),
+        @ApiResponse(responseCode = "400", description = "Bad Request - Address parameter is missing or empty, or address encoding failed"),
+        @ApiResponse(responseCode = "404", description = "Not Found - Address could not be geocoded (no results found)"),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error - Geocoding service failed or other unexpected error")
+    })
+    @GetMapping("/geocode")
+    public ResponseEntity<Map<String, Object>> geocodeAddress(@RequestParam String address) {
+        log.info("Received request to geocode address: {}", address);
+        try {
+            Map<String, Double> coordinates = deliveryRequestService.getCoordinatesFromAddress(address);
+            // Return coordinates directly in the body
+            return ResponseEntity.ok(Map.of("latitude", (Object)coordinates.get("latitude"), 
+                                             "longitude", (Object)coordinates.get("longitude")));
+        } catch (GeocodingException e) {
+            // Handle specific geocoding errors
+            log.warn("Geocoding failed for address '{}': {}", address, e.getMessage());
+            // Determine appropriate status code based on the exception message/cause if needed
+            // For simplicity, map common failure types
+            if (e.getMessage().contains("No results found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", (Object)e.getMessage()));
+            } else if (e.getMessage().contains("Address cannot be empty") || e.getMessage().contains("Failed to encode address")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", (Object)e.getMessage()));
+            } else {
+                // Treat other GeocodingExceptions (API errors, missing fields) as internal server errors
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", (Object)e.getMessage()));
+            }
+        } catch (Exception e) {
+            // Catch any other unexpected errors during the process
+            log.error("Unexpected error during geocoding for address '{}'", address, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", (Object)"An unexpected internal error occurred during geocoding."));
         }
     }
 }
